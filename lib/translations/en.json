@@ -1,0 +1,234 @@
+{
+  "common": {
+    "login": "Login",
+    "signUp": "Sign Up",
+    "menu": "Menu",
+    "appointments": "Appointments",
+    "atmLocator": "ATM Locator",
+    "supportTickets": "Support Tickets",
+    "admin": "Admin",
+    "bookNow": "Book Now",
+    "findATM": "Find ATM",
+    "createTicket": "Create Ticket",
+    "getStartedToday": "Get Started Today",
+    "contactSupport": "Contact Support",
+    "helpCenter": "Help Center",
+    "contactUs": "Contact Us",
+    "privacyPolicy": "Privacy Policy",
+    "allRightsReserved": "All rights reserved",
+    "services": "Services",
+    "support": "Support"
+  },
+  "home": {
+    "hero": {
+      "title": "Smart Banking Without the Wait",
+      "description": "NASSAQ revolutionizes your banking experience with intelligent appointment management, real-time ATM tracking, and seamless digital services. Say goodbye to long queues and paper-based procedures.",
+      "bookAppointment": "Book Appointment",
+      "findATM": "Find ATM"
+    },
+    "stats": {
+      "reducedCongestion": "Reduced Branch Congestion",
+      "fasterTransactions": "Faster Transaction Times",
+      "atmLocations": "ATM Locations Nationwide"
+    },
+    "coreServices": {
+      "title": "Three Core Services for Complete Banking Control",
+      "subtitle": "Experience banking designed around your schedule and needs",
+      "appointmentManagement": {
+        "title": "Appointment Management",
+        "description": "Schedule your branch visits in advance. Choose your service type, preferred branch, and time slot to eliminate waiting."
+      },
+      "atmTracking": {
+        "title": "ATM Status Tracking",
+        "description": "Find nearby ATMs with real-time status updates on availability, cash levels, and maintenance schedules."
+      },
+      "digitalTicketing": {
+        "title": "Digital Ticketing",
+        "description": "Submit service requests online, upload documents, and track progress in real-time from submission to completion."
+      }
+    },
+    "services": {
+      "title": "Comprehensive Banking Services",
+      "subtitle": "From account management to corporate banking, we handle it all digitally",
+      "accountServices": {
+        "title": "Account Services",
+        "description": "Open accounts, activate cards, update information, and manage your banking profile"
+      },
+      "cardServices": {
+        "title": "Card Services",
+        "description": "Request new cards, report lost cards, adjust limits, and track all card-related requests"
+      },
+      "financingServices": {
+        "title": "Financing Services",
+        "description": "Get financing consultation, submit requests, upload documents, and track approval status"
+      },
+      "corporateBanking": {
+        "title": "Corporate Banking",
+        "description": "Letters of credit, guarantees, SWIFT transfers, and comprehensive corporate solutions"
+      },
+      "transferServices": {
+        "title": "Transfer Services",
+        "description": "International transfers, RTGS, ACH, and real-time transfer tracking and confirmations"
+      },
+      "digitalDocuments": {
+        "title": "Digital Documents",
+        "description": "E-checks, e-signatures, Face ID verification, and completely paperless transactions"
+      }
+    },
+    "cta": {
+      "title": "Ready to Transform Your Banking Experience?",
+      "subtitle": "Join thousands of customers who have already switched to smarter banking"
+    },
+    "footer": {
+      "description": "Intelligent banking application designed to organize customer time, facilitate communication, and provide a fully integrated digital banking experience."
+    }
+  },
+  "appointments": {
+    "bookAppointment": "Book Appointment",
+    "myAppointments": "My Appointments",
+    "newAppointment": "New Appointment",
+    "stepOf": "Step {step} of 4",
+    "fillDetails": "Fill in the details below to schedule your branch visit",
+    "selectServiceCategory": "Select Service Category",
+    "chooseServiceCategory": "Choose a service category",
+    "selectService": "Select Specific Service",
+    "chooseService": "Choose a specific service",
+    "selectBranch": "Select Branch",
+    "chooseBranch": "Choose a branch location",
+    "selectDate": "Select Date",
+    "chooseDate": "Choose a date for your appointment",
+    "selectTime": "Select Time Slot",
+    "chooseTime": "Choose a time slot",
+    "confirmAppointment": "Confirm Appointment",
+    "appointmentConfirmed": "Appointment Confirmed!",
+    "appointmentDetails": "Your appointment has been scheduled successfully",
+    "serviceCategory": "Service Category",
+    "service": "Service",
+    "branch": "Branch",
+    "date": "Date",
+    "time": "Time",
+    "bookAnotherAppointment": "Book Another Appointment",
+    "confirmationMessage": "You will receive a confirmation notification shortly. Please arrive 10 minutes before your scheduled time.",
+    "serviceCategories": {
+      "account": {
+        "label": "Account Services",
+        "services": [
+          "Open a new account",
+          "Edit account information",
+          "Activate a new card",
+          "Receive a card (Debit / Platinum / VIP / Partner)",
+          "Request a replacement for a lost card",
+          "File a complaint about incorrect deduction",
+          "Update customer information (KYC)"
+        ]
+      },
+      "financing": {
+        "label": "Financing Services",
+        "services": [
+          "Financing consultation",
+          "Submit a financing request",
+          "Track financing request status",
+          "Submit financing documents"
+        ]
+      },
+      "corporate": {
+        "label": "Corporate / Commercial Services",
+        "services": [
+          "Submit a Letter of Credit (LC) request",
+          "Receive a Letter of Guarantee",
+          "Review corporate files",
+          "Transfer operations (in-person)",
+          "SWIFT transfers",
+          "RTGS transfers",
+          "ACH transfers"
+        ]
+      }
+    },
+    "branches": {
+      "misrata": "Misrata Branch",
+      "zliten": "Zliten Branch",
+      "sorman": "Sorman Branch",
+      "sabha": "Sabha Branch",
+      "tajoura": "Tajoura Branch",
+      "tripoliTower": "Tripoli Tower Branch",
+      "gargaresh": "Gargaresh Branch",
+      "abuSleem": "Abu Sleem Branch",
+      "babBenGhashir": "Bab Ben Ghashir Branch",
+      "janzour": "Janzour Branch"
+    }
+  },
+  "tickets": {
+    "createNewTicket": "Create New Support Ticket",
+    "submitRequest": "Submit your service request with all required information and documents",
+    "requestType": "Request Type",
+    "selectRequestType": "Select request type",
+    "requestCategory": "Request Category",
+    "selectRequestCategory": "Select request category",
+    "description": "Description",
+    "addDescription": "Add a detailed description of your request",
+    "uploadDocuments": "Upload Documents",
+    "dragDropFiles": "Drag and drop files here, or click to select",
+    "supportedFormats": "Supported formats: PDF, JPG, PNG (Max 10MB per file)",
+    "ticketCreated": "Ticket Created Successfully!",
+    "ticketSubmitted": "Your support ticket has been submitted and is being reviewed",
+    "ticketId": "Ticket ID",
+    "category": "Category",
+    "status": "Status",
+    "pending": "Pending",
+    "uploaded": "uploaded",
+    "createAnotherTicket": "Create Another Ticket",
+    "notifications": "You will receive notifications as your ticket progresses through our departments. Average response time is 24-48 hours.",
+    "requestTypes": {
+      "card": {
+        "label": "Card Services",
+        "requests": [
+          "Request a new card",
+          "Request a replacement for a lost card",
+          "Request to increase card limit",
+          "Request activation/deactivation"
+        ],
+        "documents": ["ID Copy", "Card Application Form"]
+      },
+      "account": {
+        "label": "Account Services",
+        "requests": [
+          "Monthly account statement",
+          "Annual account statement",
+          "Edit account information",
+          "Request balance certificate"
+        ],
+        "documents": ["ID Verification", "Account Details Form"]
+      },
+      "transfer": {
+        "label": "Transfer Services",
+        "requests": [
+          "Upload documents for international transfers",
+          "Request transfer confirmation",
+          "Request transfer cancellation"
+        ],
+        "documents": ["Transfer Authorization", "Beneficiary Details", "Source of Funds"]
+      },
+      "financing": {
+        "label": "Financing Services",
+        "requests": [
+          "Upload required financing documents",
+          "Track financing request status",
+          "Submit inquiries"
+        ],
+        "documents": ["Income Certificate", "Employment Letter", "Bank Statements", "Property Documents"]
+      }
+    }
+  },
+  "atm": {
+    "title": "ATM Locator",
+    "description": "Find nearby ATMs with real-time status updates",
+    "searchPlaceholder": "Search for location...",
+    "status": {
+      "available": "Available",
+      "lowCash": "Low Cash",
+      "outOfService": "Out of Service",
+      "maintenance": "Under Maintenance"
+    }
+  }
+}
+
