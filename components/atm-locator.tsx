@@ -5,8 +5,33 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { MapPin, Navigation, DollarSign, Wrench, CheckCircle2, XCircle, Search } from "lucide-react"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
+import { MapPin, Navigation, DollarSign, Wrench, CheckCircle2, XCircle, Search, MessageSquare, Upload, X, Image as ImageIcon, FileText } from "lucide-react"
+
+export type ATMFeedback = {
+  id: string
+  atmId: string
+  atmName: string
+  customer: string
+  description: string
+  imageAttachment?: {
+    name: string
+    type: string
+    data: string // base64
+  }
+  createdAt: string
+}
 
 const ATM_LOCATIONS = [
   {
@@ -20,6 +45,7 @@ const ATM_LOCATIONS = [
     maxWithdrawal: 2000,
     congestion: "low",
     mapUrl: "https://www.google.com/maps/place/32.3756161,15.0837712",
+    machineType: "ATM" as const,
   },
   {
     id: "2",
@@ -32,6 +58,7 @@ const ATM_LOCATIONS = [
     maxWithdrawal: 1500,
     congestion: "medium",
     mapUrl: "https://www.google.com/maps/place/32.4695976,14.5693255",
+    machineType: "ATM" as const,
   },
   {
     id: "3",
@@ -44,6 +71,7 @@ const ATM_LOCATIONS = [
     maxWithdrawal: 0,
     congestion: "none",
     mapUrl: "https://www.google.com/maps/place/32.7584125,12.5947031",
+    machineType: "ATM" as const,
   },
   {
     id: "4",
@@ -56,6 +84,7 @@ const ATM_LOCATIONS = [
     maxWithdrawal: 2000,
     congestion: "low",
     mapUrl: "https://www.google.com/maps/place/27.0455874,14.4188677",
+    machineType: "ATM" as const,
   },
   {
     id: "5",
@@ -68,6 +97,7 @@ const ATM_LOCATIONS = [
     maxWithdrawal: 2000,
     congestion: "high",
     mapUrl: "https://www.google.com/maps/place/32.8914852,13.3402398",
+    machineType: "ATM" as const,
   },
   {
     id: "6",
@@ -80,6 +110,7 @@ const ATM_LOCATIONS = [
     maxWithdrawal: 3000,
     congestion: "medium",
     mapUrl: "https://www.google.com/maps/place/32.8918934,13.1676376",
+    machineType: "ATM" as const,
   },
   {
     id: "7",
@@ -92,6 +123,7 @@ const ATM_LOCATIONS = [
     maxWithdrawal: 0,
     congestion: "none",
     mapUrl: "https://www.google.com/maps/place/32.8652184,13.1074416",
+    machineType: "ATM" as const,
   },
   {
     id: "8",
@@ -104,6 +136,7 @@ const ATM_LOCATIONS = [
     maxWithdrawal: 1500,
     congestion: "low",
     mapUrl: "https://www.google.com/maps/place/32.8680379,13.1660046",
+    machineType: "ATM" as const,
   },
   {
     id: "9",
@@ -116,6 +149,7 @@ const ATM_LOCATIONS = [
     maxWithdrawal: 2000,
     congestion: "low",
     mapUrl: "https://www.google.com/maps/place/32.8688393,13.1960908",
+    machineType: "ATM" as const,
   },
   {
     id: "10",
@@ -128,6 +162,7 @@ const ATM_LOCATIONS = [
     maxWithdrawal: 2000,
     congestion: "medium",
     mapUrl: "https://www.google.com/maps/place/32.8689362,13.1989504",
+    machineType: "ATM" as const,
   },
   {
     id: "11",
@@ -140,6 +175,7 @@ const ATM_LOCATIONS = [
     maxWithdrawal: 2500,
     congestion: "low",
     mapUrl: "https://www.google.com/maps/place/32.90566477700083,13.229422205698722",
+    machineType: "ATM" as const,
   },
 ]
 
@@ -185,6 +221,11 @@ function getCongestionColor(congestion: string) {
 export function ATMLocator() {
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedCity, setSelectedCity] = useState<string>("all")
+  const [feedbackDialogOpen, setFeedbackDialogOpen] = useState(false)
+  const [selectedATM, setSelectedATM] = useState<typeof ATM_LOCATIONS[0] | null>(null)
+  const [feedbackDescription, setFeedbackDescription] = useState("")
+  const [feedbackImage, setFeedbackImage] = useState<{ name: string; type: string; data: string } | null>(null)
+  const [isDragOver, setIsDragOver] = useState(false)
 
   const cities = ["all", ...new Set(ATM_LOCATIONS.map((atm) => atm.city))]
 
@@ -199,6 +240,76 @@ export function ATMLocator() {
 
   const activeATMs = filteredATMs.filter((atm) => atm.status === "active")
   const inactiveATMs = filteredATMs.filter((atm) => atm.status !== "active")
+
+  const handleOpenFeedback = (atm: typeof ATM_LOCATIONS[0]) => {
+    setSelectedATM(atm)
+    setFeedbackDescription("")
+    setFeedbackImage(null)
+    setFeedbackDialogOpen(true)
+  }
+
+  const handleFileSelect = (files: FileList | null) => {
+    if (!files || files.length === 0) return
+
+    const file = files[0]
+    // Validate file type (only images)
+    if (!file.type.startsWith("image/")) {
+      alert("Please upload an image file (JPG, PNG, etc.)")
+      return
+    }
+
+    // Validate file size (5MB max)
+    const maxSize = 5 * 1024 * 1024
+    if (file.size > maxSize) {
+      alert("File size must be less than 5MB")
+      return
+    }
+
+    // Convert to base64
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      const base64Data = e.target?.result as string
+      setFeedbackImage({
+        name: file.name,
+        type: file.type,
+        data: base64Data,
+      })
+    }
+    reader.readAsDataURL(file)
+  }
+
+  const handleRemoveImage = () => {
+    setFeedbackImage(null)
+  }
+
+  const handleSubmitFeedback = () => {
+    if (!selectedATM || !feedbackDescription.trim()) return
+
+    const userNationalNumber = localStorage.getItem("userNationalNumber") || "Unknown"
+
+    const feedback: ATMFeedback = {
+      id: `atm-feedback-${Math.random().toString(36).substr(2, 9)}`,
+      atmId: selectedATM.id,
+      atmName: selectedATM.name,
+      customer: userNationalNumber,
+      description: feedbackDescription.trim(),
+      imageAttachment: feedbackImage || undefined,
+      createdAt: new Date().toISOString(),
+    }
+
+    // Save to localStorage
+    const existingFeedback = JSON.parse(localStorage.getItem("atmFeedback") || "[]")
+    existingFeedback.push(feedback)
+    localStorage.setItem("atmFeedback", JSON.stringify(existingFeedback))
+
+    // Reset form
+    setFeedbackDescription("")
+    setFeedbackImage(null)
+    setFeedbackDialogOpen(false)
+    setSelectedATM(null)
+
+    alert("Feedback submitted successfully! Thank you for your input.")
+  }
 
   return (
     <div className="space-y-6">
@@ -294,6 +405,16 @@ export function ATMLocator() {
                           <MapPin className="h-4 w-4 mt-0.5 flex-shrink-0" />
                           <span>{atm.address}</span>
                         </CardDescription>
+                        <div className="flex items-center gap-2">
+                          <Badge variant="outline" className="text-xs">
+                            {atm.machineType}
+                          </Badge>
+                          {(atm as any).kioskType && (
+                            <Badge variant="secondary" className="text-xs">
+                              {(atm as any).kioskType}
+                            </Badge>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </CardHeader>
@@ -341,6 +462,15 @@ export function ATMLocator() {
                         <Navigation className="h-4 w-4" />
                         Get Directions
                       </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="flex items-center gap-2"
+                        onClick={() => handleOpenFeedback(atm)}
+                      >
+                        <MessageSquare className="h-4 w-4" />
+                        Submit Feedback
+                      </Button>
                     </div>
                   </CardContent>
                 </div>
@@ -349,6 +479,103 @@ export function ATMLocator() {
           ))
         )}
       </div>
+
+      {/* Feedback Dialog */}
+      <Dialog
+        open={feedbackDialogOpen}
+        onOpenChange={(open) => {
+          if (!open) {
+            setFeedbackDialogOpen(false)
+            setSelectedATM(null)
+            setFeedbackDescription("")
+            setFeedbackImage(null)
+          }
+        }}
+      >
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Submit Feedback for {selectedATM?.name}</DialogTitle>
+            <DialogDescription>
+              Share your experience or report any issues with this ATM
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Description</Label>
+              <Textarea
+                placeholder="Describe your experience or any issues you encountered..."
+                value={feedbackDescription}
+                onChange={(e) => setFeedbackDescription(e.target.value)}
+                rows={5}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Image Attachment (Optional)</Label>
+              {!feedbackImage ? (
+                <div
+                                  className={`border-2 border-dashed rounded-lg p-6 transition-colors ${
+                                    isDragOver ? "border-primary bg-primary/5" : "border-border"
+                                  }`}
+                                  onDragOver={(e) => {
+                                    e.preventDefault()
+                                    setIsDragOver(true)
+                                  }}
+                                  onDragLeave={() => setIsDragOver(false)}
+                                  onDrop={(e) => {
+                                    e.preventDefault()
+                                    setIsDragOver(false)
+                                    handleFileSelect(e.dataTransfer.files)
+                                  }}
+                                >
+                                  <div className="flex flex-col items-center justify-center text-center">
+                                    <Upload className="h-8 w-8 text-muted-foreground mb-2" />
+                                    <p className="text-sm text-muted-foreground mb-2">
+                                      Drag and drop an image here, or click to select
+                                    </p>
+                                    <p className="text-xs text-muted-foreground mb-4">
+                                      Supported formats: JPG, PNG (Max 5MB)
+                                    </p>
+                                    <input
+                                      type="file"
+                                      id="atm-feedback-image"
+                                      className="hidden"
+                                      accept="image/*"
+                                      onChange={(e) => handleFileSelect(e.target.files)}
+                                    />
+                                    <Button
+                                      type="button"
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => document.getElementById("atm-feedback-image")?.click()}
+                                    >
+                                      <Upload className="h-4 w-4 mr-2" />
+                                      Choose Image
+                                    </Button>
+                                  </div>
+                                </div>
+                              ) : (
+                                <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
+                                  <div className="flex items-center gap-2 flex-1 min-w-0">
+                                    <ImageIcon className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                                    <span className="text-sm truncate">{feedbackImage.name}</span>
+                                  </div>
+                                  <Button variant="ghost" size="sm" onClick={handleRemoveImage} className="h-8 w-8 p-0">
+                                    <X className="h-4 w-4" />
+                                  </Button>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                          <DialogFooter>
+                            <Button variant="outline" onClick={() => setFeedbackDialogOpen(false)}>
+                              Cancel
+                            </Button>
+                            <Button onClick={handleSubmitFeedback} disabled={!feedbackDescription.trim()}>
+                              Submit Feedback
+                            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

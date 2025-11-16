@@ -1,11 +1,26 @@
 "use client"
 
+import { useEffect } from "react"
+import { useRouter } from "next/navigation"
 import { Header } from "@/components/header"
 import { AdminDashboard } from "@/components/admin-dashboard"
 import { useLanguage } from "@/contexts/language-context"
+import { useAuth } from "@/contexts/auth-context"
 
 export default function AdminPage() {
   const { t } = useLanguage()
+  const { isAuthenticated } = useAuth()
+  const router = useRouter()
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      router.push("/")
+    }
+  }, [isAuthenticated, router])
+
+  if (!isAuthenticated) {
+    return null
+  }
   
   return (
     <div className="min-h-screen">

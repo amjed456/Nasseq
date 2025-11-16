@@ -1,14 +1,28 @@
 "use client"
 
 import { Header } from "@/components/header"
+import { LoginForm } from "@/components/login-form"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Calendar, MapPin, FileText, TrendingUp, Clock, Users } from "lucide-react"
 import Link from "next/link"
 import { useLanguage } from "@/contexts/language-context"
+import { useAuth } from "@/contexts/auth-context"
 
 export default function HomePage() {
   const { t } = useLanguage()
+  const { isAuthenticated } = useAuth()
+
+  // Show login page if not authenticated
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/5 via-background to-accent/5">
+        <LoginForm />
+      </div>
+    )
+  }
+
+  // Show main content if authenticated
   return (
     <div className="min-h-screen">
       <Header />
@@ -229,9 +243,11 @@ export default function HomePage() {
               </CardDescription>
             </CardHeader>
             <CardContent className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 px-4 sm:px-6 pb-6 sm:pb-8">
-              <Button size="lg" className="text-sm sm:text-base w-full sm:w-auto">
-                {t.common.getStartedToday}
-              </Button>
+              <Link href="/login">
+                <Button size="lg" className="text-sm sm:text-base w-full sm:w-auto">
+                  {t.common.getStartedToday}
+                </Button>
+              </Link>
               <Button size="lg" variant="outline" className="text-sm sm:text-base bg-transparent w-full sm:w-auto">
                 {t.common.contactSupport}
               </Button>

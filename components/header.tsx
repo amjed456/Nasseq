@@ -13,10 +13,20 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet"
 import { useLanguage } from "@/contexts/language-context"
+import { useAuth } from "@/contexts/auth-context"
+import { useRouter } from "next/navigation"
 
 export function Header() {
   const [open, setOpen] = useState(false)
   const { language, setLanguage, t } = useLanguage()
+  const { isAuthenticated, logout } = useAuth()
+  const router = useRouter()
+
+  const handleLogout = () => {
+    logout()
+    router.push("/")
+    setOpen(false)
+  }
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -43,6 +53,12 @@ export function Header() {
             className="text-sm font-medium text-foreground/80 hover:text-foreground transition-colors"
           >
             {t.common.supportTickets}
+          </Link>
+          <Link
+            href="/rewards"
+            className="text-sm font-medium text-foreground/80 hover:text-foreground transition-colors"
+          >
+            Rewards
           </Link>
           <Link
             href="/admin"
@@ -75,10 +91,19 @@ export function Header() {
               AR
             </button>
           </div>
-          <Button variant="ghost" className="hidden md:inline-flex text-sm">
-            {t.common.login}
-          </Button>
-          <Button className="hidden md:inline-flex text-sm">{t.common.signUp}</Button>
+          {isAuthenticated ? (
+            <Button 
+              onClick={handleLogout}
+              variant="outline"
+              className="hidden md:inline-flex text-sm"
+            >
+              Logout
+            </Button>
+          ) : (
+            <Link href="/login">
+              <Button className="hidden md:inline-flex text-sm">{t.common.login}</Button>
+            </Link>
+          )}
           <Sheet open={open} onOpenChange={setOpen}>
             <SheetTrigger asChild>
               <Button variant="ghost" size="icon" className="md:hidden">
@@ -110,6 +135,13 @@ export function Header() {
                   className="text-base font-medium text-foreground/80 hover:text-foreground transition-colors"
                 >
                   {t.common.supportTickets}
+                </Link>
+                <Link
+                  href="/rewards"
+                  onClick={() => setOpen(false)}
+                  className="text-base font-medium text-foreground/80 hover:text-foreground transition-colors"
+                >
+                  Rewards
                 </Link>
                 <Link
                   href="/admin"
@@ -145,14 +177,17 @@ export function Header() {
                     </button>
                   </div>
                 </div>
-                <div className="flex flex-col gap-2">
-                  <Button variant="ghost" className="w-full justify-start" onClick={() => setOpen(false)}>
-                    {t.common.login}
+                {isAuthenticated ? (
+                  <Button onClick={handleLogout} className="w-full">
+                    Logout
                   </Button>
-                  <Button className="w-full" onClick={() => setOpen(false)}>
-                    {t.common.signUp}
-                  </Button>
-                </div>
+                ) : (
+                  <Link href="/login" onClick={() => setOpen(false)} className="w-full">
+                    <Button className="w-full">
+                      {t.common.login}
+                    </Button>
+                  </Link>
+                )}
               </nav>
             </SheetContent>
           </Sheet>

@@ -1,16 +1,16 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useMemo } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Calendar } from "@/components/ui/calendar"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
 import { AppointmentHistory } from "@/components/appointment-history"
-import { CheckCircle2, Clock } from "lucide-react"
+import { Clock, Users, Building2, Star } from "lucide-react"
 import { useLanguage } from "@/contexts/language-context"
+import { useEffect } from "react"
 
 export function AppointmentBooking() {
   const { t, language } = useLanguage()
@@ -30,100 +30,197 @@ export function AppointmentBooking() {
     },
   }
 
-  const BRANCHES = [
-    { id: "misrata", name: t.appointments.branches.misrata, address: "Misrata City Center" },
-    { id: "zliten", name: t.appointments.branches.zliten, address: "Zliten Downtown" },
-    { id: "sorman", name: t.appointments.branches.sorman, address: "Sorman Main Street" },
-    { id: "sabha", name: t.appointments.branches.sabha, address: "Sabha City Center" },
-    { id: "tajoura", name: t.appointments.branches.tajoura, address: "Tajoura District" },
-    { id: "tripoli-tower", name: t.appointments.branches.tripoliTower, address: "Tripoli Tower" },
-    { id: "gargaresh", name: t.appointments.branches.gargaresh, address: "Gargaresh Area" },
-    { id: "abu-sleem", name: t.appointments.branches.abuSleem, address: "Abu Sleem District" },
-    { id: "bab-ben-ghashir", name: t.appointments.branches.babBenGhashir, address: "Bab Ben Ghashir" },
-    { id: "janzour", name: t.appointments.branches.janzour, address: "Janzour Area" },
-  ]
 
-  const TIME_SLOTS = [
-    "09:00 AM",
-    "09:30 AM",
-    "10:00 AM",
-    "10:30 AM",
-    "11:00 AM",
-    "11:30 AM",
-    "12:00 PM",
-    "12:30 PM",
-    "01:00 PM",
-    "01:30 PM",
-    "02:00 PM",
-    "02:30 PM",
-    "03:00 PM",
-    "03:30 PM",
-    "04:00 PM",
-  ]
-  const [step, setStep] = useState(1)
+  // Service to Department/Person mapping with working hours
+  type ResourceSchedule = {
+    id: string
+    name: string
+    type: "department" | "person"
+    schedule: string // e.g., "Everyday from 8 AM - 3 PM except Thursday from 8 AM - 4 PM"
+  }
+
+  // Default resources (fallback if localStorage is empty)
+  const DEFAULT_SERVICE_TO_RESOURCES: Record<string, ResourceSchedule[]> = {
+    "Edit account information": [
+      { id: "account-dept", name: "Account Services Department", type: "department", schedule: "Everyday from 8 AM - 3 PM except Thursday from 8 AM - 4 PM" },
+      { id: "account-specialist", name: "Account Specialist", type: "person", schedule: "Sunday to Wednesday: 9 AM - 2 PM, Thursday: 8 AM - 4 PM" },
+      { id: "account-manager", name: "Account Manager", type: "person", schedule: "Monday to Friday: 8 AM - 3 PM" },
+    ],
+    "Activate a new card": [
+      { id: "card-dept", name: "Card Services Department", type: "department", schedule: "Everyday from 8 AM - 3 PM except Thursday from 8 AM - 4 PM" },
+      { id: "card-specialist", name: "Card Specialist", type: "person", schedule: "Sunday to Wednesday: 9 AM - 2 PM, Thursday: 8 AM - 4 PM" },
+    ],
+    "Receive a card (Debit / Platinum / VIP / Partner)": [
+      { id: "card-dept", name: "Card Services Department", type: "department", schedule: "Everyday from 8 AM - 3 PM except Thursday from 8 AM - 4 PM" },
+      { id: "card-distribution", name: "Card Distribution Team", type: "department", schedule: "Monday to Friday: 9 AM - 1 PM" },
+    ],
+    "Request a replacement for a lost card": [
+      { id: "card-dept", name: "Card Services Department", type: "department", schedule: "Everyday from 8 AM - 3 PM except Thursday from 8 AM - 4 PM" },
+      { id: "card-specialist", name: "Card Specialist", type: "person", schedule: "Sunday to Wednesday: 9 AM - 2 PM, Thursday: 8 AM - 4 PM" },
+    ],
+    "File a complaint about incorrect deduction": [
+      { id: "complaints-dept", name: "Customer Complaints Department", type: "department", schedule: "Everyday from 8 AM - 3 PM" },
+      { id: "complaints-officer", name: "Complaints Officer", type: "person", schedule: "Monday to Thursday: 8 AM - 2 PM, Friday: 9 AM - 1 PM" },
+    ],
+    "Update customer information (KYC)": [
+      { id: "kyc-dept", name: "KYC Department", type: "department", schedule: "Everyday from 8 AM - 3 PM except Thursday from 8 AM - 4 PM" },
+      { id: "kyc-specialist", name: "KYC Specialist", type: "person", schedule: "Sunday to Wednesday: 9 AM - 2 PM, Thursday: 8 AM - 4 PM" },
+    ],
+    "Financing consultation": [
+      { id: "financing-dept", name: "Financing Department", type: "department", schedule: "Everyday from 8 AM - 3 PM except Thursday from 8 AM - 4 PM" },
+      { id: "financing-advisor", name: "Financing Advisor", type: "person", schedule: "Monday to Friday: 8 AM - 3 PM" },
+      { id: "senior-financing-advisor", name: "Senior Financing Advisor", type: "person", schedule: "Sunday to Wednesday: 9 AM - 2 PM, Thursday: 8 AM - 4 PM" },
+    ],
+    "Submit a financing request": [
+      { id: "financing-dept", name: "Financing Department", type: "department", schedule: "Everyday from 8 AM - 3 PM except Thursday from 8 AM - 4 PM" },
+      { id: "financing-advisor", name: "Financing Advisor", type: "person", schedule: "Monday to Friday: 8 AM - 3 PM" },
+    ],
+    "Track financing request status": [
+      { id: "financing-dept", name: "Financing Department", type: "department", schedule: "Everyday from 8 AM - 3 PM" },
+      { id: "financing-support", name: "Financing Support Team", type: "department", schedule: "Monday to Friday: 9 AM - 2 PM" },
+    ],
+    "Submit financing documents": [
+      { id: "financing-dept", name: "Financing Department", type: "department", schedule: "Everyday from 8 AM - 3 PM except Thursday from 8 AM - 4 PM" },
+      { id: "document-team", name: "Document Processing Team", type: "department", schedule: "Monday to Friday: 8 AM - 2 PM" },
+    ],
+    "Submit a Letter of Credit (LC) request": [
+      { id: "corporate-dept", name: "Corporate Banking Department", type: "department", schedule: "Everyday from 8 AM - 3 PM except Thursday from 8 AM - 4 PM" },
+      { id: "lc-specialist", name: "LC Processing Team", type: "department", schedule: "Monday to Friday: 9 AM - 1 PM" },
+    ],
+    "Receive a Letter of Guarantee": [
+      { id: "corporate-dept", name: "Corporate Banking Department", type: "department", schedule: "Everyday from 8 AM - 3 PM except Thursday from 8 AM - 4 PM" },
+      { id: "guarantee-team", name: "Guarantee Services Team", type: "department", schedule: "Sunday to Wednesday: 8 AM - 2 PM, Thursday: 8 AM - 4 PM" },
+    ],
+    "Review corporate files": [
+      { id: "corporate-dept", name: "Corporate Banking Department", type: "department", schedule: "Everyday from 8 AM - 3 PM except Thursday from 8 AM - 4 PM" },
+      { id: "corporate-manager", name: "Corporate Account Manager", type: "person", schedule: "Monday to Friday: 8 AM - 3 PM" },
+    ],
+    "Transfer operations (in-person)": [
+      { id: "transfers-dept", name: "Transfer Operations Department", type: "department", schedule: "Everyday from 8 AM - 3 PM except Thursday from 8 AM - 4 PM" },
+      { id: "transfer-specialist", name: "Transfer Processing Team", type: "department", schedule: "Monday to Friday: 9 AM - 2 PM" },
+    ],
+    "SWIFT transfers": [
+      { id: "swift-dept", name: "SWIFT Operations Department", type: "department", schedule: "Everyday from 8 AM - 3 PM" },
+      { id: "swift-team", name: "SWIFT Processing Team", type: "department", schedule: "Monday to Friday: 8 AM - 2 PM" },
+    ],
+    "RTGS transfers": [
+      { id: "rtgs-dept", name: "RTGS Operations Department", type: "department", schedule: "Everyday from 8 AM - 3 PM except Thursday from 8 AM - 4 PM" },
+      { id: "rtgs-team", name: "RTGS Processing Team", type: "department", schedule: "Sunday to Wednesday: 9 AM - 2 PM, Thursday: 8 AM - 4 PM" },
+    ],
+    "ACH transfers": [
+      { id: "ach-dept", name: "ACH Operations Department", type: "department", schedule: "Everyday from 8 AM - 3 PM" },
+      { id: "ach-team", name: "ACH Processing Team", type: "department", schedule: "Monday to Friday: 8 AM - 2 PM" },
+    ],
+  }
+
   const [serviceCategory, setServiceCategory] = useState("")
   const [service, setService] = useState("")
-  const [branch, setBranch] = useState("")
-  const [date, setDate] = useState<Date | undefined>(undefined)
-  const [timeSlot, setTimeSlot] = useState("")
-  const [isSubmitted, setIsSubmitted] = useState(false)
+  const [favorites, setFavorites] = useState<ResourceSchedule[]>([])
 
-  const handleSubmit = () => {
-    setIsSubmitted(true)
+  // Load favorites from localStorage on mount
+  useEffect(() => {
+    const savedFavorites = localStorage.getItem("favoriteAppointments")
+    if (savedFavorites) {
+      try {
+        setFavorites(JSON.parse(savedFavorites))
+      } catch (e) {
+        console.error("Error loading favorites:", e)
+      }
+    }
+  }, [])
+
+  // Save favorites to localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem("favoriteAppointments", JSON.stringify(favorites))
+  }, [favorites])
+
+  // Load resources and service mappings from localStorage
+  const [serviceResourceMappings, setServiceResourceMappings] = useState<Record<string, string[]>>({})
+  const [allResources, setAllResources] = useState<ResourceSchedule[]>([])
+
+  useEffect(() => {
+    // Load resources from localStorage
+    const savedResources = localStorage.getItem("appointmentResources")
+    const savedMappings = localStorage.getItem("serviceResourceMappings")
+    
+    if (savedResources) {
+      try {
+        setAllResources(JSON.parse(savedResources))
+      } catch (e) {
+        console.error("Error loading resources:", e)
+      }
+    }
+    
+    if (savedMappings) {
+      try {
+        setServiceResourceMappings(JSON.parse(savedMappings))
+      } catch (e) {
+        console.error("Error loading service mappings:", e)
+      }
+    }
+
+    // Listen for storage changes
+    const handleStorageChange = () => {
+      const updatedResources = localStorage.getItem("appointmentResources")
+      const updatedMappings = localStorage.getItem("serviceResourceMappings")
+      if (updatedResources) {
+        try {
+          setAllResources(JSON.parse(updatedResources))
+        } catch (e) {
+          console.error("Error loading resources:", e)
+        }
+      }
+      if (updatedMappings) {
+        try {
+          setServiceResourceMappings(JSON.parse(updatedMappings))
+        } catch (e) {
+          console.error("Error loading service mappings:", e)
+        }
+      }
+    }
+
+    window.addEventListener("storage", handleStorageChange)
+    // Poll for changes (since storage event doesn't fire in same tab)
+    const interval = setInterval(handleStorageChange, 1000)
+    
+    return () => {
+      window.removeEventListener("storage", handleStorageChange)
+      clearInterval(interval)
+    }
+  }, [])
+
+  // Get available resources for selected service
+  const availableResources = useMemo(() => {
+    if (!service) return []
+    
+    // First try to get from localStorage mappings
+    const resourceIds = serviceResourceMappings[service] || []
+    if (resourceIds.length > 0 && allResources.length > 0) {
+      const mappedResources = allResources.filter((r) => resourceIds.includes(r.id))
+      if (mappedResources.length > 0) {
+        return mappedResources
+      }
+    }
+    
+    // Fallback to default resources
+    return DEFAULT_SERVICE_TO_RESOURCES[service] || []
+  }, [service, serviceResourceMappings, allResources])
+
+  // Check if a resource is favorited
+  const isFavorited = (resourceId: string) => {
+    return favorites.some((fav) => fav.id === resourceId)
   }
 
-  const handleReset = () => {
-    setStep(1)
-    setServiceCategory("")
-    setService("")
-    setBranch("")
-    setDate(undefined)
-    setTimeSlot("")
-    setIsSubmitted(false)
+  // Toggle favorite status
+  const toggleFavorite = (resource: ResourceSchedule, e: React.MouseEvent) => {
+    e.stopPropagation()
+    if (isFavorited(resource.id)) {
+      setFavorites(favorites.filter((fav) => fav.id !== resource.id))
+    } else {
+      setFavorites([...favorites, resource])
+    }
   }
 
-  if (isSubmitted) {
-    return (
-      <Card className="border-2 border-primary/20">
-        <CardHeader className="text-center pb-4">
-          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
-            <CheckCircle2 className="h-8 w-8 text-primary" />
-          </div>
-          <CardTitle className="text-2xl">{t.appointments.appointmentConfirmed}</CardTitle>
-          <CardDescription className="text-base">{t.appointments.appointmentDetails}</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="rounded-lg bg-muted p-4 space-y-3">
-            <div className="flex justify-between">
-              <span className="text-sm text-muted-foreground">{t.appointments.service}:</span>
-              <span className="text-sm font-medium">{service}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-sm text-muted-foreground">{t.appointments.branch}:</span>
-              <span className="text-sm font-medium">{BRANCHES.find((b) => b.id === branch)?.name}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-sm text-muted-foreground">{t.appointments.date}:</span>
-              <span className="text-sm font-medium">{date?.toLocaleDateString(language === "ar" ? "ar-LY" : "en-US")}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-sm text-muted-foreground">{t.appointments.time}:</span>
-              <span className="text-sm font-medium">{timeSlot}</span>
-            </div>
-          </div>
-          <div className="flex items-start gap-2 rounded-lg bg-primary/5 p-4 text-sm">
-            <Clock className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
-            <p className="text-muted-foreground">
-              {t.appointments.confirmationMessage}
-            </p>
-          </div>
-          <Button onClick={handleReset} className="w-full">
-            {t.appointments.bookAnotherAppointment}
-          </Button>
-        </CardContent>
-      </Card>
-    )
-  }
 
   return (
     <Tabs defaultValue="book" className="w-full">
@@ -135,11 +232,8 @@ export function AppointmentBooking() {
       <TabsContent value="book" className="mt-6">
         <Card>
           <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle>{t.appointments.newAppointment}</CardTitle>
-              <Badge variant="outline">{t.appointments.stepOf.replace("{step}", step.toString())}</Badge>
-            </div>
-            <CardDescription>{t.appointments.fillDetails}</CardDescription>
+            <CardTitle>Service Schedule</CardTitle>
+            <CardDescription>Select a service to view available departments and their working hours</CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
             {/* Step 1: Service Category */}
@@ -150,7 +244,6 @@ export function AppointmentBooking() {
                 onValueChange={(value) => {
                   setServiceCategory(value)
                   setService("")
-                  setStep(2)
                 }}
               >
                 <SelectTrigger>
@@ -174,95 +267,101 @@ export function AppointmentBooking() {
                   value={service}
                   onValueChange={(value) => {
                     setService(value)
-                    setStep(3)
                   }}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder={t.appointments.chooseService} />
                   </SelectTrigger>
                   <SelectContent>
-                    {SERVICE_CATEGORIES[serviceCategory as keyof typeof SERVICE_CATEGORIES].services.map((svc) => (
-                      <SelectItem key={svc} value={svc}>
-                        {svc}
-                      </SelectItem>
-                    ))}
+                    {SERVICE_CATEGORIES[serviceCategory as keyof typeof SERVICE_CATEGORIES].services
+                      .filter((svc) => {
+                        // Remove "Open a new account" option when account services is selected
+                        if (serviceCategory === "account") {
+                          return svc !== "Open a new account" && svc !== "فتح حساب جديد"
+                        }
+                        return true
+                      })
+                      .map((svc) => (
+                        <SelectItem key={svc} value={svc}>
+                          {svc}
+                        </SelectItem>
+                      ))}
                   </SelectContent>
                 </Select>
               </div>
             )}
 
-            {/* Step 3: Branch Selection */}
+            {/* Schedule View - Departments/People with Working Hours */}
             {service && (
               <div className="space-y-4">
-                <Label>{t.appointments.selectBranch}</Label>
-                <Select
-                  value={branch}
-                  onValueChange={(value) => {
-                    setBranch(value)
-                    setStep(4)
-                  }}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder={t.appointments.chooseBranch} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {BRANCHES.map((b) => (
-                      <SelectItem key={b.id} value={b.id}>
-                        <div className="flex flex-col">
-                          <span>{b.name}</span>
-                          <span className="text-xs text-muted-foreground">{b.address}</span>
-                        </div>
-                      </SelectItem>
+                <Label>Available Departments and People</Label>
+                {availableResources.length > 0 ? (
+                  <div className="space-y-3">
+                    {availableResources.map((resource) => (
+                      <Card
+                        key={resource.id}
+                        className="transition-all hover:border-primary/50"
+                      >
+                        <CardContent className="pt-4">
+                          <div className="flex items-start gap-3">
+                            <div className={`p-2 rounded-lg ${
+                              resource.type === "department" 
+                                ? "bg-blue-100 text-blue-600" 
+                                : "bg-green-100 text-green-600"
+                            }`}>
+                              {resource.type === "department" ? (
+                                <Building2 className="h-4 w-4" />
+                              ) : (
+                                <Users className="h-4 w-4" />
+                              )}
+                            </div>
+                            <div className="flex-1">
+                              <div className="flex items-start justify-between gap-4">
+                                <div className="flex-1">
+                                  <p className="font-medium">{resource.name}</p>
+                                  <div className="mt-2 p-3 bg-muted/50 rounded-lg border">
+                                    <div className="flex items-start gap-2">
+                                      <Clock className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                                      <div>
+                                        <p className="text-xs font-medium text-muted-foreground mb-1">Working Hours:</p>
+                                        <p className="text-sm font-medium">{resource.schedule}</p>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <Badge variant={resource.type === "department" ? "default" : "secondary"}>
+                                    {resource.type === "department" ? "Dept" : "Person"}
+                                  </Badge>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-8 w-8"
+                                    onClick={(e) => toggleFavorite(resource, e)}
+                                  >
+                                    <Star
+                                      className={`h-4 w-4 ${
+                                        isFavorited(resource.id)
+                                          ? "fill-yellow-400 text-yellow-400"
+                                          : "text-muted-foreground"
+                                      }`}
+                                    />
+                                  </Button>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
                     ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
-
-            {/* Step 4: Date & Time */}
-            {branch && (
-              <div className="space-y-6">
-                <div className="space-y-4">
-                  <Label>{t.appointments.selectDate}</Label>
-                  <Calendar
-                    mode="single"
-                    selected={date}
-                    onSelect={setDate}
-                    disabled={(date) => date < new Date() || date.getDay() === 5 || date.getDay() === 6}
-                    className="rounded-md border"
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    * {t.appointments.chooseDate}
-                  </p>
-                </div>
-
-                {date && (
-                  <div className="space-y-4">
-                    <Label>{t.appointments.selectTime}</Label>
-                    <div className="grid grid-cols-3 gap-2">
-                      {TIME_SLOTS.map((slot) => (
-                        <Button
-                          key={slot}
-                          variant={timeSlot === slot ? "default" : "outline"}
-                          size="sm"
-                          onClick={() => setTimeSlot(slot)}
-                          className="text-xs"
-                        >
-                          {slot}
-                        </Button>
-                      ))}
-                    </div>
+                  </div>
+                ) : (
+                  <div className="p-4 border rounded-lg bg-muted/30 text-center">
+                    <p className="text-sm text-muted-foreground">
+                      No departments or people available for this service. Please contact support.
+                    </p>
                   </div>
                 )}
-              </div>
-            )}
-
-            {/* Submit Button */}
-            {timeSlot && (
-              <div className="pt-4 border-t">
-                <Button onClick={handleSubmit} className="w-full" size="lg">
-                  {t.appointments.confirmAppointment}
-                </Button>
               </div>
             )}
           </CardContent>
@@ -270,7 +369,12 @@ export function AppointmentBooking() {
       </TabsContent>
 
       <TabsContent value="history" className="mt-6">
-        <AppointmentHistory />
+        <AppointmentHistory 
+          favorites={favorites} 
+          onRemoveFavorite={(resourceId) => {
+            setFavorites(favorites.filter((fav) => fav.id !== resourceId))
+          }}
+        />
       </TabsContent>
     </Tabs>
   )

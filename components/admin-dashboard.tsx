@@ -5,6 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { TicketManagement } from "@/components/admin-ticket-management"
 import { AppointmentManagement } from "@/components/admin-appointment-management"
 import { ATMManagement } from "@/components/admin-atm-management"
+import { RewardStatistics } from "@/components/admin-reward-statistics"
 import { FileText, Calendar, MapPin, Clock } from "lucide-react"
 
 export function AdminDashboard() {
@@ -59,10 +60,11 @@ export function AdminDashboard() {
 
       {/* Management Tabs */}
       <Tabs defaultValue="tickets" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-3 lg:w-auto">
+        <TabsList className="grid w-full grid-cols-4 lg:w-auto">
           <TabsTrigger value="tickets">Ticket Management</TabsTrigger>
           <TabsTrigger value="appointments">Appointments</TabsTrigger>
           <TabsTrigger value="atms">ATM Status</TabsTrigger>
+          <TabsTrigger value="rewards">Reward Statistics</TabsTrigger>
         </TabsList>
 
         <TabsContent value="tickets" className="space-y-4">
@@ -75,6 +77,10 @@ export function AdminDashboard() {
 
         <TabsContent value="atms" className="space-y-4">
           <ATMManagement />
+        </TabsContent>
+
+        <TabsContent value="rewards" className="space-y-4">
+          <RewardStatistics />
         </TabsContent>
       </Tabs>
     </div>

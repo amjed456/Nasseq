@@ -1,11 +1,26 @@
 "use client"
 
+import { useEffect } from "react"
+import { useRouter } from "next/navigation"
 import { Header } from "@/components/header"
 import { ATMLocator } from "@/components/atm-locator"
 import { useLanguage } from "@/contexts/language-context"
+import { useAuth } from "@/contexts/auth-context"
 
 export default function ATMLocatorPage() {
   const { t } = useLanguage()
+  const { isAuthenticated } = useAuth()
+  const router = useRouter()
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      router.push("/")
+    }
+  }, [isAuthenticated, router])
+
+  if (!isAuthenticated) {
+    return null
+  }
   
   return (
     <div className="min-h-screen">

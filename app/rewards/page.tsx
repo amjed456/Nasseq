@@ -3,11 +3,11 @@
 import { useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Header } from "@/components/header"
-import { TicketingSystem } from "@/components/ticketing-system"
+import { RewardsPage } from "@/components/rewards-page"
 import { useLanguage } from "@/contexts/language-context"
 import { useAuth } from "@/contexts/auth-context"
 
-export default function TicketsPage() {
+export default function RewardsPageRoute() {
   const { t } = useLanguage()
   const { isAuthenticated } = useAuth()
   const router = useRouter()
@@ -27,13 +27,14 @@ export default function TicketsPage() {
       <Header />
       <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold tracking-tight text-foreground md:text-4xl">{t.common.supportTickets}</h1>
+          <h1 className="text-3xl font-bold tracking-tight text-foreground md:text-4xl">Rewards & Points</h1>
           <p className="mt-2 text-muted-foreground leading-relaxed">
-            {t.tickets.submitRequest}
+            Earn points by submitting feedback tickets and unlock amazing rewards
           </p>
         </div>
-        <TicketingSystem />
+        <RewardsPage />
       </main>
     </div>
   )
 }
+
