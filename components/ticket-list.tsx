@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input"
 import { FileText, Search, MessageSquare, Clock, CheckCircle2, XCircle, AlertCircle, Download, Image as ImageIcon, Eye } from "lucide-react"
 import { useState, useEffect } from "react"
 import { Ticket, TicketAttachment } from "@/components/create-ticket"
+import { useLanguage } from "@/contexts/language-context"
 import {
   Dialog,
   DialogContent,
@@ -44,14 +45,22 @@ function getStatusColor(status: string) {
   }
 }
 
-function getStatusLabel(status: string) {
-  return status
+function getStatusLabel(status: string, t: any) {
+  const statusMap: Record<string, string> = {
+    "pending": t.tickets.pending,
+    "under-review": t.tickets.underReview,
+    "in-progress": t.tickets.inProgress,
+    "completed": t.tickets.completed,
+    "rejected": t.tickets.rejected,
+  }
+  return statusMap[status] || status
     .split("-")
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
     .join(" ")
 }
 
 export function TicketList() {
+  const { t } = useLanguage()
   const [searchQuery, setSearchQuery] = useState("")
   const [tickets, setTickets] = useState<Ticket[]>([])
   const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null)
@@ -127,7 +136,7 @@ export function TicketList() {
           <div className="relative">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
-              placeholder="Search tickets by ID, service, or category..."
+              placeholder={t.tickets.searchPlaceholder}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-9"
@@ -143,7 +152,7 @@ export function TicketList() {
             <CardContent className="flex flex-col items-center justify-center py-12">
               <FileText className="h-12 w-12 text-muted-foreground mb-4" />
               <p className="text-muted-foreground text-center">
-                No tickets found. Submit your first feedback to get started.
+                {t.tickets.noTicketsFound}
               </p>
             </CardContent>
           </Card>
@@ -172,7 +181,7 @@ export function TicketList() {
                             className="flex items-center gap-1"
                           >
                             {getStatusIcon(ticket.status)}
-                            {getStatusLabel(ticket.status)}
+                            {getStatusLabel(ticket.status, t)}
                           </Badge>
                         </div>
                         <CardDescription>{ticket.description}</CardDescription>
@@ -184,7 +193,7 @@ export function TicketList() {
                             <div className="flex items-start gap-2">
                               <XCircle className="h-4 w-4 text-destructive mt-0.5 flex-shrink-0" />
                               <div>
-                                <p className="text-xs font-medium text-destructive mb-1">Rejection Reason:</p>
+                                <p className="text-xs font-medium text-destructive mb-1">{t.tickets.rejectionReason}:</p>
                                 <p className="text-sm text-destructive">{ticket.rejectionReason}</p>
                               </div>
                             </div>
@@ -197,17 +206,17 @@ export function TicketList() {
                     <div className="flex items-center gap-6 text-sm text-muted-foreground">
                       <div className="flex items-center gap-1.5">
                         <Clock className="h-4 w-4" />
-                        <span>Created: {formatDate(ticket.createdAt)}</span>
+                        <span>{t.tickets.createdAt}: {formatDate(ticket.createdAt)}</span>
                       </div>
                       {ticket.attachments && ticket.attachments.length > 0 && (
                         <div className="flex items-center gap-1.5">
                           <FileText className="h-4 w-4" />
-                          <span>{ticket.attachments.length} attachment(s)</span>
+                          <span>{ticket.attachments.length} {t.tickets.attachments}</span>
                         </div>
                       )}
                       <div className="flex items-center gap-1.5">
                         <MessageSquare className="h-4 w-4" />
-                        <span>{ticket.replies?.length || 0} replies</span>
+                        <span>{ticket.replies?.length || 0} {t.tickets.adminReplies}</span>
                       </div>
                     </div>
                     <div className="flex gap-2">
@@ -219,7 +228,7 @@ export function TicketList() {
                           setIsDetailsOpen(true)
                         }}
                       >
-                        View Details
+                        {t.common.viewDetails}
                       </Button>
                     </div>
                   </CardContent>
@@ -234,18 +243,18 @@ export function TicketList() {
       <Dialog open={isDetailsOpen} onOpenChange={setIsDetailsOpen}>
         <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Ticket Details</DialogTitle>
-            <DialogDescription>Complete information about your feedback ticket</DialogDescription>
+            <DialogTitle>{t.tickets.ticketId} {t.common.viewDetails}</DialogTitle>
+            <DialogDescription>{t.tickets.ticketSubmitted}</DialogDescription>
           </DialogHeader>
           {selectedTicket && (
             <div className="space-y-4">
               <div className="grid gap-4 sm:grid-cols-2">
                 <div>
-                  <p className="text-xs text-muted-foreground mb-1">Ticket ID</p>
+                  <p className="text-xs text-muted-foreground mb-1">{t.tickets.ticketId}</p>
                   <p className="font-mono text-sm">{selectedTicket.id}</p>
                 </div>
                 <div>
-                  <p className="text-xs text-muted-foreground mb-1">Status</p>
+                  <p className="text-xs text-muted-foreground mb-1">{t.tickets.status}</p>
                   <Badge
                     variant={
                       selectedTicket.status === "completed"
@@ -255,32 +264,32 @@ export function TicketList() {
                           : "secondary"
                     }
                   >
-                    {getStatusLabel(selectedTicket.status)}
+                    {getStatusLabel(selectedTicket.status, t)}
                   </Badge>
                 </div>
                 <div>
-                  <p className="text-xs text-muted-foreground mb-1">Service Category</p>
+                  <p className="text-xs text-muted-foreground mb-1">{t.tickets.category}</p>
                   <p className="text-sm">{selectedTicket.serviceCategory}</p>
                 </div>
                 <div>
-                  <p className="text-xs text-muted-foreground mb-1">Service</p>
+                  <p className="text-xs text-muted-foreground mb-1">{t.tickets.service}</p>
                   <p className="text-sm font-medium">{selectedTicket.service}</p>
                 </div>
                 <div>
-                  <p className="text-xs text-muted-foreground mb-1">Created At</p>
+                  <p className="text-xs text-muted-foreground mb-1">{t.tickets.createdAt}</p>
                   <p className="text-sm">{formatDate(selectedTicket.createdAt)}</p>
                 </div>
                 <div>
-                  <p className="text-xs text-muted-foreground mb-1">Last Updated</p>
+                  <p className="text-xs text-muted-foreground mb-1">{t.tickets.updatedAt}</p>
                   <p className="text-sm">{formatDate(selectedTicket.updatedAt)}</p>
                 </div>
                 <div className="sm:col-span-2">
-                  <p className="text-xs text-muted-foreground mb-1">Description</p>
+                  <p className="text-xs text-muted-foreground mb-1">{t.tickets.description}</p>
                   <p className="text-sm mt-1 p-3 bg-muted rounded-lg">{selectedTicket.description}</p>
                 </div>
                 {selectedTicket.rejectionReason && (
                   <div className="sm:col-span-2">
-                    <p className="text-xs text-muted-foreground mb-1">Rejection Reason</p>
+                    <p className="text-xs text-muted-foreground mb-1">{t.tickets.rejectionReason}</p>
                     <p className="text-sm mt-1 p-3 bg-destructive/10 text-destructive rounded-lg">
                       {selectedTicket.rejectionReason}
                     </p>
@@ -288,7 +297,7 @@ export function TicketList() {
                 )}
                 {selectedTicket.attachments && selectedTicket.attachments.length > 0 && (
                   <div className="sm:col-span-2">
-                    <p className="text-xs text-muted-foreground mb-2">Attachments</p>
+                    <p className="text-xs text-muted-foreground mb-2">{t.tickets.attachments}</p>
                     <div className="space-y-2">
                       {selectedTicket.attachments.map((attachment) => (
                         <div
@@ -333,7 +342,7 @@ export function TicketList() {
                 )}
                 {selectedTicket.replies && selectedTicket.replies.length > 0 && (
                   <div className="sm:col-span-2">
-                    <p className="text-xs text-muted-foreground mb-2">Admin Replies</p>
+                    <p className="text-xs text-muted-foreground mb-2">{t.tickets.adminReplies}</p>
                     <div className="space-y-2">
                       {selectedTicket.replies.map((reply, idx) => (
                         <div key={idx} className="p-3 bg-muted rounded-lg">
@@ -352,7 +361,7 @@ export function TicketList() {
           )}
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsDetailsOpen(false)}>
-              Close
+              {t.common.close}
             </Button>
           </DialogFooter>
         </DialogContent>

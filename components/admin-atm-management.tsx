@@ -21,6 +21,7 @@ import { useState, useEffect } from "react"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { format } from "date-fns"
 import { ATMFeedback } from "@/components/atm-locator"
+import { useLanguage } from "@/contexts/language-context"
 
 type ATM = {
   id: string
@@ -88,6 +89,7 @@ const ATM_STATUS_DATA: ATM[] = [
 ]
 
 export function ATMManagement() {
+  const { t } = useLanguage()
   const [statusFilter, setStatusFilter] = useState("all")
   const [atms, setAtms] = useState<ATM[]>(ATM_STATUS_DATA)
   const [addATMDialogOpen, setAddATMDialogOpen] = useState(false)
@@ -279,27 +281,27 @@ export function ATMManagement() {
                 <SelectValue placeholder="Filter by status" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Status</SelectItem>
-                <SelectItem value="active">Active</SelectItem>
-                <SelectItem value="maintenance">Under Maintenance</SelectItem>
-                <SelectItem value="out-of-service">Out of Service</SelectItem>
+                <SelectItem value="all">{t.admin.atms.allStatus}</SelectItem>
+                <SelectItem value="active">{t.admin.atms.active}</SelectItem>
+                <SelectItem value="maintenance">{t.admin.atms.maintenance}</SelectItem>
+                <SelectItem value="out-of-service">{t.admin.atms.outOfService}</SelectItem>
               </SelectContent>
             </Select>
             <div className="flex-1" />
             <Dialog open={scheduleMaintenanceDialogOpen} onOpenChange={setScheduleMaintenanceDialogOpen}>
               <DialogTrigger asChild>
-                <Button variant="outline">Schedule Maintenance</Button>
+                <Button variant="outline">{t.admin.atms.scheduleMaintenance}</Button>
               </DialogTrigger>
               <DialogContent>
                 <DialogHeader>
-                  <DialogTitle>Schedule Maintenance</DialogTitle>
+                  <DialogTitle>{t.admin.atms.scheduleMaintenance}</DialogTitle>
                   <DialogDescription>
-                    Select ATMs and a date to schedule maintenance.
+                    {t.admin.atms.scheduleMaintenanceDescription}
                   </DialogDescription>
                 </DialogHeader>
                 <div className="space-y-4 py-4">
                   <div className="space-y-2">
-                    <Label>Select ATMs</Label>
+                    <Label>{t.admin.atms.selectATMs}</Label>
                     <div className="max-h-48 overflow-y-auto space-y-2 border rounded-md p-2">
                       {atms.map((atm) => (
                         <div key={atm.id} className="flex items-center space-x-2">
@@ -321,7 +323,7 @@ export function ATMManagement() {
                     </div>
                   </div>
                   <div className="space-y-2">
-                    <Label>Maintenance Date</Label>
+                    <Label>{t.admin.atms.maintenanceDate}</Label>
                     <Popover>
                       <PopoverTrigger asChild>
                         <Button
@@ -345,10 +347,10 @@ export function ATMManagement() {
                 </div>
                 <DialogFooter>
                   <Button variant="outline" onClick={() => setScheduleMaintenanceDialogOpen(false)}>
-                    Cancel
+                    {t.common.cancel}
                   </Button>
                   <Button onClick={handleScheduleMaintenance} disabled={!maintenanceDate || maintenanceATMs.length === 0}>
-                    Schedule
+                    {t.admin.atms.scheduleMaintenance}
                   </Button>
                 </DialogFooter>
               </DialogContent>
@@ -356,13 +358,13 @@ export function ATMManagement() {
             
             <Dialog open={updateCashDialogOpen} onOpenChange={setUpdateCashDialogOpen}>
               <DialogTrigger asChild>
-                <Button>Update Cash Levels</Button>
+                <Button>{t.admin.atms.updateCashLevels}</Button>
               </DialogTrigger>
               <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
                 <DialogHeader>
-                  <DialogTitle>Update Cash Levels</DialogTitle>
+                  <DialogTitle>{t.admin.atms.updateCashLevels}</DialogTitle>
                   <DialogDescription>
-                    Update the cash level percentage for each ATM.
+                    {t.admin.atms.updateCashLevelsDescription}
                   </DialogDescription>
                 </DialogHeader>
                 <div className="space-y-4 py-4">
@@ -401,9 +403,9 @@ export function ATMManagement() {
                 </div>
                 <DialogFooter>
                   <Button variant="outline" onClick={() => setUpdateCashDialogOpen(false)}>
-                    Cancel
+                    {t.common.cancel}
                   </Button>
-                  <Button onClick={handleUpdateCashLevels}>Update All</Button>
+                  <Button onClick={handleUpdateCashLevels}>{t.admin.atms.updateAll}</Button>
                 </DialogFooter>
               </DialogContent>
             </Dialog>
@@ -417,32 +419,32 @@ export function ATMManagement() {
               </DialogTrigger>
               <DialogContent>
                 <DialogHeader>
-                  <DialogTitle>Add New ATM</DialogTitle>
+                  <DialogTitle>{t.admin.atms.addNewATM}</DialogTitle>
                   <DialogDescription>
-                    Add a new ATM to the system.
+                    {t.admin.atms.addATMDescription}
                   </DialogDescription>
                 </DialogHeader>
                 <div className="space-y-4 py-4">
                   <div className="space-y-2">
-                    <Label htmlFor="name">ATM Name</Label>
+                    <Label htmlFor="name">{t.admin.atms.atmName}</Label>
                     <Input
                       id="name"
-                      placeholder="e.g., Misrata ATM"
+                      placeholder={t.admin.atms.atmNamePlaceholder}
                       value={newATM.name}
                       onChange={(e) => setNewATM({ ...newATM, name: e.target.value })}
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="location">Location</Label>
+                    <Label htmlFor="location">{t.admin.atms.location}</Label>
                     <Input
                       id="location"
-                      placeholder="e.g., Misrata City Center"
+                      placeholder={t.admin.atms.locationPlaceholder}
                       value={newATM.location}
                       onChange={(e) => setNewATM({ ...newATM, location: e.target.value })}
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="cashLevel">Initial Cash Level (%)</Label>
+                    <Label htmlFor="cashLevel">{t.admin.atms.initialCashLevel}</Label>
                     <Input
                       id="cashLevel"
                       type="number"
@@ -453,7 +455,7 @@ export function ATMManagement() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="machineType">Machine Type</Label>
+                    <Label htmlFor="machineType">{t.admin.atms.machineType}</Label>
                     <Select
                       value={newATM.machineType}
                       onValueChange={(value: "ATM" | "Kiosk") => {
@@ -461,7 +463,7 @@ export function ATMManagement() {
                       }}
                     >
                       <SelectTrigger id="machineType">
-                        <SelectValue placeholder="Select machine type" />
+                        <SelectValue placeholder={t.admin.atms.selectMachineType} />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="ATM">ATM</SelectItem>
@@ -471,7 +473,7 @@ export function ATMManagement() {
                   </div>
                   {newATM.machineType === "Kiosk" && (
                     <div className="space-y-2">
-                      <Label htmlFor="kioskType">Kiosk Type</Label>
+                      <Label htmlFor="kioskType">{t.admin.atms.kioskType}</Label>
                       <Select
                         value={newATM.kioskType}
                         onValueChange={(value: "Kiosk Account Opener" | "Kiosk check printer" | "Kiosk for deposit" | "Kiosk check deposit") => {
@@ -479,13 +481,13 @@ export function ATMManagement() {
                         }}
                       >
                         <SelectTrigger id="kioskType">
-                          <SelectValue placeholder="Select kiosk type" />
+                          <SelectValue placeholder={t.admin.atms.selectKioskType} />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="Kiosk Account Opener">Kiosk Account Opener</SelectItem>
-                          <SelectItem value="Kiosk check printer">Kiosk check printer</SelectItem>
-                          <SelectItem value="Kiosk for deposit">Kiosk for deposit</SelectItem>
-                          <SelectItem value="Kiosk check deposit">Kiosk check deposit</SelectItem>
+                          <SelectItem value="Kiosk Account Opener">{t.admin.atms.kioskAccountOpener}</SelectItem>
+                          <SelectItem value="Kiosk check printer">{t.admin.atms.kioskCheckPrinter}</SelectItem>
+                          <SelectItem value="Kiosk for deposit">{t.admin.atms.kioskForDeposit}</SelectItem>
+                          <SelectItem value="Kiosk check deposit">{t.admin.atms.kioskCheckDeposit}</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -493,13 +495,13 @@ export function ATMManagement() {
                 </div>
                 <DialogFooter>
                   <Button variant="outline" onClick={() => setAddATMDialogOpen(false)}>
-                    Cancel
+                    {t.common.cancel}
                   </Button>
                   <Button 
                     onClick={handleAddATM} 
                     disabled={!newATM.name || !newATM.location || (newATM.machineType === "Kiosk" && !newATM.kioskType)}
                   >
-                    Add ATM
+                    {t.admin.atms.addATM}
                   </Button>
                 </DialogFooter>
               </DialogContent>
@@ -560,23 +562,23 @@ export function ATMManagement() {
               <CardContent className="space-y-4">
                 <div className="grid gap-4 sm:grid-cols-4 text-sm">
                   <div>
-                    <div className="text-muted-foreground text-xs mb-1">Cash Level</div>
+                    <div className="text-muted-foreground text-xs mb-1">{t.admin.atms.cashLevel}</div>
                     <div className={`font-bold text-lg ${getCashLevelColor(atm.cashLevel)}`}>{atm.cashLevel}%</div>
                   </div>
                   <div>
-                    <div className="text-muted-foreground text-xs mb-1">Transactions Today</div>
+                    <div className="text-muted-foreground text-xs mb-1">{t.admin.atms.transactionsToday}</div>
                     <div className="font-bold text-lg">{atm.transactionsToday}</div>
                   </div>
                   <div>
-                    <div className="text-muted-foreground text-xs mb-1">Last Maintenance</div>
+                    <div className="text-muted-foreground text-xs mb-1">{t.admin.atms.lastMaintenance}</div>
                     <div className="font-medium">{new Date(atm.lastMaintenance).toLocaleDateString()}</div>
                   </div>
                   <div>
-                    <div className="text-muted-foreground text-xs mb-1">Next Maintenance</div>
+                    <div className="text-muted-foreground text-xs mb-1">{t.admin.atms.nextMaintenance}</div>
                     <div className="font-medium">
                       {atm.nextMaintenance !== "Pending"
                         ? new Date(atm.nextMaintenance).toLocaleDateString()
-                        : "Pending"}
+                        : t.tickets.pending}
                     </div>
                   </div>
                 </div>
@@ -586,7 +588,7 @@ export function ATMManagement() {
                     <div className="flex items-start gap-2">
                       <AlertTriangle className="h-4 w-4 text-red-600 mt-0.5 flex-shrink-0" />
                       <div className="space-y-1">
-                        <div className="text-sm font-medium text-red-600">Issues Reported:</div>
+                        <div className="text-sm font-medium text-red-600">{t.admin.atms.issuesReported}</div>
                         <ul className="text-sm text-red-700 space-y-0.5">
                           {atm.issues.map((issue, idx) => (
                             <li key={idx}>• {issue}</li>
@@ -632,7 +634,7 @@ export function ATMManagement() {
 
                 <div className="flex gap-2">
                   <Button variant="outline" size="sm">
-                    View Details
+                    {t.common.viewDetails}
                   </Button>
                   {getFeedbackForATM(atm.id).length > 0 && (
                     <Button
@@ -641,18 +643,18 @@ export function ATMManagement() {
                       onClick={() => handleViewAllFeedback(atm.id)}
                     >
                       <MessageSquare className="h-4 w-4 mr-2" />
-                      View Feedback ({getFeedbackForATM(atm.id).length})
+                      {t.admin.atms.viewFeedback} ({getFeedbackForATM(atm.id).length})
                     </Button>
                   )}
                   {atm.status === "active" && (
                     <Button variant="outline" size="sm">
                       <Wrench className="h-4 w-4 mr-2" />
-                      Schedule Maintenance
+                      {t.admin.atms.scheduleMaintenance}
                     </Button>
                   )}
                   {atm.status !== "active" && (
                     <Button variant="default" size="sm">
-                      Mark as Active
+                      {t.admin.atms.markAsActive}
                     </Button>
                   )}
                 </div>
@@ -666,11 +668,11 @@ export function ATMManagement() {
       <Dialog open={viewFeedbackDialogOpen} onOpenChange={setViewFeedbackDialogOpen}>
         <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>ATM Feedback</DialogTitle>
+            <DialogTitle>{t.admin.atms.atmFeedback}</DialogTitle>
             <DialogDescription>
               {selectedFeedback && (
                 <div className="flex items-center justify-between">
-                  <span>Feedback for {selectedFeedback.atmName}</span>
+                  <span>{t.admin.atms.feedbackFor} {selectedFeedback.atmName}</span>
                   {selectedATMForFeedback && (
                     <span className="text-xs text-muted-foreground">
                       {getFeedbackForATM(selectedATMForFeedback).findIndex((f) => f.id === selectedFeedback.id) + 1} of {getFeedbackForATM(selectedATMForFeedback).length}
@@ -684,29 +686,29 @@ export function ATMManagement() {
             <div className="space-y-4">
               <div className="grid gap-4 sm:grid-cols-2">
                 <div>
-                  <Label className="text-xs text-muted-foreground">ATM Name</Label>
+                  <Label className="text-xs text-muted-foreground">{t.admin.atms.atmName}</Label>
                   <p className="text-sm font-medium">{selectedFeedback.atmName}</p>
                 </div>
                 <div>
-                  <Label className="text-xs text-muted-foreground">Customer</Label>
+                  <Label className="text-xs text-muted-foreground">{t.admin.atms.customer}</Label>
                   <p className="text-sm font-medium">{selectedFeedback.customer}</p>
                 </div>
                 <div>
-                  <Label className="text-xs text-muted-foreground">Submitted At</Label>
+                  <Label className="text-xs text-muted-foreground">{t.admin.atms.submittedAt}</Label>
                   <p className="text-sm">{formatDate(selectedFeedback.createdAt)}</p>
                 </div>
                 <div>
-                  <Label className="text-xs text-muted-foreground">Feedback ID</Label>
+                  <Label className="text-xs text-muted-foreground">{t.admin.atms.feedbackID}</Label>
                   <p className="text-sm font-mono text-xs">{selectedFeedback.id}</p>
                 </div>
               </div>
               <div>
-                <Label className="text-xs text-muted-foreground mb-2 block">Description</Label>
+                <Label className="text-xs text-muted-foreground mb-2 block">{t.tickets.description}</Label>
                 <p className="text-sm p-3 bg-muted rounded-lg">{selectedFeedback.description}</p>
               </div>
               {selectedFeedback.imageAttachment && (
                 <div>
-                  <Label className="text-xs text-muted-foreground mb-2 block">Image Attachment</Label>
+                  <Label className="text-xs text-muted-foreground mb-2 block">{t.atm.actions.imageAttachment}</Label>
                   <div className="space-y-2">
                     <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
                       <div className="flex items-center gap-2 flex-1">
@@ -715,7 +717,7 @@ export function ATMManagement() {
                       </div>
                       <Button variant="outline" size="sm" onClick={() => handleDownloadImage(selectedFeedback)}>
                         <Download className="h-4 w-4 mr-2" />
-                        Download
+                        {t.tickets.download}
                       </Button>
                     </div>
                     <div className="border rounded-lg overflow-hidden">
@@ -742,7 +744,7 @@ export function ATMManagement() {
                       getFeedbackForATM(selectedATMForFeedback).findIndex((f) => f.id === selectedFeedback.id) === 0
                     }
                   >
-                    Previous
+                    {t.admin.atms.previous}
                   </Button>
                   <Button
                     variant="outline"
@@ -753,13 +755,13 @@ export function ATMManagement() {
                       getFeedbackForATM(selectedATMForFeedback).length - 1
                     }
                   >
-                    Next
+                    {t.admin.atms.next}
                   </Button>
                 </>
               )}
             </div>
             <Button variant="outline" onClick={() => setViewFeedbackDialogOpen(false)}>
-              Close
+              {t.common.close}
             </Button>
           </DialogFooter>
         </DialogContent>

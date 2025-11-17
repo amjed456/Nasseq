@@ -7,15 +7,17 @@ import { AppointmentManagement } from "@/components/admin-appointment-management
 import { ATMManagement } from "@/components/admin-atm-management"
 import { RewardStatistics } from "@/components/admin-reward-statistics"
 import { FileText, Calendar, MapPin, Clock } from "lucide-react"
+import { useLanguage } from "@/contexts/language-context"
 
 export function AdminDashboard() {
+  const { t } = useLanguage()
   return (
     <div className="space-y-6">
       {/* Key Metrics */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Active Tickets</CardTitle>
+            <CardTitle className="text-sm font-medium">{t.admin.tickets.title}</CardTitle>
             <FileText className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -26,7 +28,7 @@ export function AdminDashboard() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Today's Appointments</CardTitle>
+            <CardTitle className="text-sm font-medium">{t.admin.appointments.title}</CardTitle>
             <Calendar className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -37,7 +39,7 @@ export function AdminDashboard() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Active ATMs</CardTitle>
+            <CardTitle className="text-sm font-medium">{t.admin.dashboard.activeATMs}</CardTitle>
             <MapPin className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -48,7 +50,7 @@ export function AdminDashboard() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Avg. Response Time</CardTitle>
+            <CardTitle className="text-sm font-medium">{t.admin.dashboard.avgResponseTime}</CardTitle>
             <Clock className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -61,10 +63,10 @@ export function AdminDashboard() {
       {/* Management Tabs */}
       <Tabs defaultValue="tickets" className="space-y-6">
         <TabsList className="grid w-full grid-cols-4 lg:w-auto">
-          <TabsTrigger value="tickets">Ticket Management</TabsTrigger>
-          <TabsTrigger value="appointments">Appointments</TabsTrigger>
-          <TabsTrigger value="atms">ATM Status</TabsTrigger>
-          <TabsTrigger value="rewards">Reward Statistics</TabsTrigger>
+          <TabsTrigger value="tickets">{t.admin.tickets.title}</TabsTrigger>
+          <TabsTrigger value="appointments">{t.admin.appointments.title}</TabsTrigger>
+          <TabsTrigger value="atms">{t.admin.atms.title}</TabsTrigger>
+          <TabsTrigger value="rewards">{t.admin.rewards.title}</TabsTrigger>
         </TabsList>
 
         <TabsContent value="tickets" className="space-y-4">

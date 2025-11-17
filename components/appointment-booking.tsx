@@ -8,9 +8,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
 import { AppointmentHistory } from "@/components/appointment-history"
-import { Clock, Users, Building2, Star } from "lucide-react"
+import { Clock, Users, Building2, Star, Upload, X, FileText, Image as ImageIcon, CheckCircle2 } from "lucide-react"
 import { useLanguage } from "@/contexts/language-context"
 import { useEffect } from "react"
+import { Textarea } from "@/components/ui/textarea"
+import { Input } from "@/components/ui/input"
 
 export function AppointmentBooking() {
   const { t, language } = useLanguage()
@@ -28,7 +30,26 @@ export function AppointmentBooking() {
       label: t.appointments.serviceCategories.corporate.label,
       services: t.appointments.serviceCategories.corporate.services,
     },
+    administrator: {
+      label: t.appointments.serviceCategories.administrator.label,
+      services: t.appointments.serviceCategories.administrator.services,
+    },
   }
+
+  const ADMINISTRATORS = [
+    { id: "it", label: t.appointments.administrators.it },
+    { id: "hr", label: t.appointments.administrators.hr },
+    { id: "branchManager", label: t.appointments.administrators.branchManager },
+    { id: "finance", label: t.appointments.administrators.finance },
+  ]
+
+  // Administrator appointment form state
+  const [selectedAdministrator, setSelectedAdministrator] = useState("")
+  const [appointmentTitle, setAppointmentTitle] = useState("")
+  const [appointmentDescription, setAppointmentDescription] = useState("")
+  const [appointmentAttachment, setAppointmentAttachment] = useState<{ name: string; type: string; size: number; data: string } | null>(null)
+  const [isDragOver, setIsDragOver] = useState(false)
+  const [isAppointmentSubmitted, setIsAppointmentSubmitted] = useState(false)
 
 
   // Service to Department/Person mapping with working hours
@@ -221,19 +242,77 @@ export function AppointmentBooking() {
     }
   }
 
+  // Handle file select for appointment attachment
+  const handleFileSelect = (file: File) => {
+    if (file.size > 10 * 1024 * 1024) {
+      alert("File size must be less than 10MB")
+      return
+    }
+
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      const base64Data = e.target?.result as string
+      setAppointmentAttachment({
+        name: file.name,
+        type: file.type,
+        size: file.size,
+        data: base64Data,
+      })
+    }
+    reader.readAsDataURL(file)
+  }
+
+  // Handle appointment submission
+  const handleSubmitAppointment = () => {
+    if (!selectedAdministrator || !appointmentTitle || !appointmentDescription) return
+
+    // Get user info from localStorage
+    const userInfo = {
+      nationalNumber: localStorage.getItem("userNationalNumber") || "N/A",
+      phoneNumber: localStorage.getItem("userPhoneNumber") || "N/A",
+      iban: localStorage.getItem("userIban") || "N/A",
+    }
+
+    // Create appointment request
+    const appointmentRequest = {
+      id: `APT-${Math.random().toString(36).substr(2, 9).toUpperCase()}`,
+      customer: userInfo.nationalNumber,
+      customerPhone: userInfo.phoneNumber,
+      customerIban: userInfo.iban,
+      administrator: selectedAdministrator,
+      administratorLabel: ADMINISTRATORS.find((a) => a.id === selectedAdministrator)?.label || "",
+      title: appointmentTitle,
+      description: appointmentDescription,
+      attachment: appointmentAttachment || undefined,
+      status: "pending" as const,
+      rewarded: false,
+      assignedTo: undefined as string | undefined,
+      assignedEmail: undefined as string | undefined,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    }
+
+    // Save to localStorage
+    const existingAppointments = JSON.parse(localStorage.getItem("appointmentRequests") || "[]")
+    existingAppointments.push(appointmentRequest)
+    localStorage.setItem("appointmentRequests", JSON.stringify(existingAppointments))
+
+    setIsAppointmentSubmitted(true)
+  }
+
 
   return (
     <Tabs defaultValue="book" className="w-full">
       <TabsList className="grid w-full grid-cols-2">
         <TabsTrigger value="book">{t.appointments.bookAppointment}</TabsTrigger>
-        <TabsTrigger value="history">{t.appointments.myAppointments}</TabsTrigger>
+        <TabsTrigger value="history">{t.appointments.myAppointments.favoriteDepartments}</TabsTrigger>
       </TabsList>
 
       <TabsContent value="book" className="mt-6">
         <Card>
           <CardHeader>
-            <CardTitle>Service Schedule</CardTitle>
-            <CardDescription>Select a service to view available departments and their working hours</CardDescription>
+            <CardTitle>{t.appointments.serviceSchedule.title}</CardTitle>
+            <CardDescription>{t.appointments.serviceSchedule.description}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
             {/* Step 1: Service Category */}
@@ -259,6 +338,167 @@ export function AppointmentBooking() {
               </Select>
             </div>
 
+            {/* Administrator Appointment Flow */}
+            {serviceCategory === "administrator" ? (
+              <>
+                {isAppointmentSubmitted ? (
+                  <div className="space-y-4 p-6 border rounded-lg bg-green-50">
+                    <div className="flex items-center gap-2 text-green-600">
+                      <CheckCircle2 className="h-5 w-5" />
+                      <h3 className="font-semibold">{t.appointments.appointmentRequest.submitted}</h3>
+                    </div>
+                    <p className="text-sm text-muted-foreground">{t.appointments.appointmentRequest.successMessage}</p>
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        setIsAppointmentSubmitted(false)
+                        setServiceCategory("")
+                        setSelectedAdministrator("")
+                        setAppointmentTitle("")
+                        setAppointmentDescription("")
+                        setAppointmentAttachment(null)
+                      }}
+                    >
+                      Submit Another Request
+                    </Button>
+                  </div>
+                ) : (
+                  <>
+                    {/* Select Administrator */}
+                    <div className="space-y-4">
+                      <Label>{t.appointments.appointmentRequest.selectAdministrator}</Label>
+                      <Select
+                        value={selectedAdministrator}
+                        onValueChange={setSelectedAdministrator}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder={t.appointments.appointmentRequest.chooseAdministrator} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {ADMINISTRATORS.map((admin) => (
+                            <SelectItem key={admin.id} value={admin.id}>
+                              {admin.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {/* Title */}
+                    {selectedAdministrator && (
+                      <div className="space-y-4">
+                        <Label>{t.appointments.appointmentRequest.title}</Label>
+                        <Input
+                          placeholder={t.appointments.appointmentRequest.titlePlaceholder}
+                          value={appointmentTitle}
+                          onChange={(e) => setAppointmentTitle(e.target.value)}
+                        />
+                      </div>
+                    )}
+
+                    {/* Description */}
+                    {selectedAdministrator && appointmentTitle && (
+                      <div className="space-y-4">
+                        <Label>{t.appointments.appointmentRequest.description}</Label>
+                        <Textarea
+                          placeholder={t.appointments.appointmentRequest.descriptionPlaceholder}
+                          value={appointmentDescription}
+                          onChange={(e) => setAppointmentDescription(e.target.value)}
+                          rows={5}
+                        />
+                      </div>
+                    )}
+
+                    {/* Attachment */}
+                    {selectedAdministrator && appointmentTitle && (
+                      <div className="space-y-4">
+                        <Label>{t.appointments.appointmentRequest.attachment}</Label>
+                        {!appointmentAttachment ? (
+                          <div
+                            className={`border-2 border-dashed rounded-lg p-6 transition-colors ${
+                              isDragOver ? "border-primary bg-primary/5" : "border-border"
+                            }`}
+                            onDragOver={(e) => {
+                              e.preventDefault()
+                              setIsDragOver(true)
+                            }}
+                            onDragLeave={() => setIsDragOver(false)}
+                            onDrop={(e) => {
+                              e.preventDefault()
+                              setIsDragOver(false)
+                              const files = e.dataTransfer.files
+                              if (files.length > 0) {
+                                handleFileSelect(files[0])
+                              }
+                            }}
+                          >
+                            <div className="flex flex-col items-center justify-center text-center">
+                              <Upload className="h-8 w-8 text-muted-foreground mb-2" />
+                              <p className="text-sm text-muted-foreground mb-2">
+                                Drag and drop a file here, or click to select
+                              </p>
+                              <p className="text-xs text-muted-foreground mb-4">
+                                Supported formats: PDF, JPG, PNG (Max 10MB)
+                              </p>
+                              <input
+                                type="file"
+                                id="appointment-attachment"
+                                className="hidden"
+                                accept=".pdf,.jpg,.jpeg,.png,.gif"
+                                onChange={(e) => {
+                                  if (e.target.files && e.target.files[0]) {
+                                    handleFileSelect(e.target.files[0])
+                                  }
+                                }}
+                              />
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => document.getElementById("appointment-attachment")?.click()}
+                              >
+                                <Upload className="h-4 w-4 mr-2" />
+                                Choose File
+                              </Button>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
+                            <div className="flex items-center gap-2 flex-1 min-w-0">
+                              {appointmentAttachment.type.startsWith("image/") ? (
+                                <ImageIcon className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                              ) : (
+                                <FileText className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                              )}
+                              <span className="text-sm truncate">{appointmentAttachment.name}</span>
+                            </div>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => setAppointmentAttachment(null)}
+                              className="h-8 w-8 p-0"
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Submit Button */}
+                    {selectedAdministrator && appointmentTitle && appointmentDescription && (
+                      <Button
+                        onClick={handleSubmitAppointment}
+                        className="w-full"
+                      >
+                        {t.appointments.appointmentRequest.submit}
+                      </Button>
+                    )}
+                  </>
+                )}
+              </>
+            ) : (
+              <>
             {/* Step 2: Specific Service */}
             {serviceCategory && (
               <div className="space-y-4">
@@ -273,28 +513,28 @@ export function AppointmentBooking() {
                     <SelectValue placeholder={t.appointments.chooseService} />
                   </SelectTrigger>
                   <SelectContent>
-                    {SERVICE_CATEGORIES[serviceCategory as keyof typeof SERVICE_CATEGORIES].services
-                      .filter((svc) => {
-                        // Remove "Open a new account" option when account services is selected
-                        if (serviceCategory === "account") {
-                          return svc !== "Open a new account" && svc !== "فتح حساب جديد"
-                        }
-                        return true
-                      })
-                      .map((svc) => (
-                        <SelectItem key={svc} value={svc}>
-                          {svc}
-                        </SelectItem>
-                      ))}
+                        {SERVICE_CATEGORIES[serviceCategory as keyof typeof SERVICE_CATEGORIES].services
+                          .filter((svc) => {
+                            // Remove "Open a new account" option when account services is selected
+                            if (serviceCategory === "account") {
+                              return svc !== "Open a new account" && svc !== "فتح حساب جديد"
+                            }
+                            return true
+                          })
+                          .map((svc) => (
+                      <SelectItem key={svc} value={svc}>
+                        {svc}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
             )}
 
             {/* Schedule View - Departments/People with Working Hours */}
-            {service && (
+                {service && (
               <div className="space-y-4">
-                <Label>Available Departments and People</Label>
+                <Label>{t.appointments.serviceSchedule.availableDepartments}</Label>
                 {availableResources.length > 0 ? (
                   <div className="space-y-3">
                     {availableResources.map((resource) => (
@@ -326,14 +566,14 @@ export function AppointmentBooking() {
                                         <p className="text-xs font-medium text-muted-foreground mb-1">Working Hours:</p>
                                         <p className="text-sm font-medium">{resource.schedule}</p>
                                       </div>
-                                    </div>
-                                  </div>
-                                </div>
+                        </div>
+              </div>
+                </div>
                                 <div className="flex items-center gap-2">
                                   <Badge variant={resource.type === "department" ? "default" : "secondary"}>
                                     {resource.type === "department" ? "Dept" : "Person"}
                                   </Badge>
-                                  <Button
+                        <Button
                                     variant="ghost"
                                     size="icon"
                                     className="h-8 w-8"
@@ -346,23 +586,25 @@ export function AppointmentBooking() {
                                           : "text-muted-foreground"
                                       }`}
                                     />
-                                  </Button>
+                        </Button>
                                 </div>
                               </div>
                             </div>
                           </div>
                         </CardContent>
                       </Card>
-                    ))}
-                  </div>
+                      ))}
+                    </div>
                 ) : (
                   <div className="p-4 border rounded-lg bg-muted/30 text-center">
                     <p className="text-sm text-muted-foreground">
-                      No departments or people available for this service. Please contact support.
+                      {t.appointments.serviceSchedule.noDepartmentsAvailable}
                     </p>
                   </div>
                 )}
               </div>
+            )}
+                </>
             )}
           </CardContent>
         </Card>

@@ -17,7 +17,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Building2, Users, Clock, Plus, Edit, Trash2, X } from "lucide-react"
+import { Building2, Users, Clock, Plus, Edit, Trash2, X, Gift, CheckCircle2, Mail, Eye, Download, Image as ImageIcon, FileText } from "lucide-react"
 import { useLanguage } from "@/contexts/language-context"
 
 export type ResourceSchedule = {
@@ -41,6 +41,14 @@ export function AppointmentManagement() {
   const [newResourceSchedule, setNewResourceSchedule] = useState("")
   const [filterType, setFilterType] = useState<"all" | "department" | "person">("all")
   const [searchQuery, setSearchQuery] = useState("")
+  
+  // Appointment requests state
+  const [appointmentRequests, setAppointmentRequests] = useState<any[]>([])
+  const [selectedAppointment, setSelectedAppointment] = useState<any | null>(null)
+  const [isViewAppointmentOpen, setIsViewAppointmentOpen] = useState(false)
+  const [isAssignAppointmentOpen, setIsAssignAppointmentOpen] = useState(false)
+  const [assignEmail, setAssignEmail] = useState("")
+  const [assignName, setAssignName] = useState("")
 
   const SERVICE_CATEGORIES = {
     account: {
@@ -103,6 +111,35 @@ export function AppointmentManagement() {
       localStorage.setItem("serviceResourceMappings", JSON.stringify(serviceResources))
     }
   }, [serviceResources])
+
+  // Load appointment requests from localStorage
+  useEffect(() => {
+    const loadAppointments = () => {
+      const stored = localStorage.getItem("appointmentRequests")
+      if (stored) {
+        try {
+          setAppointmentRequests(JSON.parse(stored))
+        } catch (e) {
+          console.error("Error loading appointments:", e)
+        }
+      }
+    }
+    loadAppointments()
+    const handleStorageChange = () => loadAppointments()
+    window.addEventListener("storage", handleStorageChange)
+    const interval = setInterval(loadAppointments, 1000)
+    return () => {
+      window.removeEventListener("storage", handleStorageChange)
+      clearInterval(interval)
+    }
+  }, [])
+
+  // Save appointment requests to localStorage
+  useEffect(() => {
+    if (appointmentRequests.length > 0) {
+      localStorage.setItem("appointmentRequests", JSON.stringify(appointmentRequests))
+    }
+  }, [appointmentRequests])
 
   const filteredResources = useMemo(() => {
     return resources.filter((resource) => {
@@ -203,6 +240,73 @@ export function AppointmentManagement() {
     })
   }
 
+  // Handle accept appointment (reward user)
+  const handleAcceptAppointment = (appointment: any) => {
+    if (appointment.rewarded) return
+
+    // Award 20 points to the user
+    const userNationalNumber = appointment.customer
+    const userPoints = JSON.parse(localStorage.getItem("userRewardPoints") || "{}")
+    const currentPoints = userPoints[userNationalNumber] || 0
+    userPoints[userNationalNumber] = currentPoints + 20
+    localStorage.setItem("userRewardPoints", JSON.stringify(userPoints))
+
+    // Mark appointment as rewarded
+    const updated = appointmentRequests.map((a) => {
+      if (a.id === appointment.id) {
+        return {
+          ...a,
+          rewarded: true,
+          updatedAt: new Date().toISOString(),
+        }
+      }
+      return a
+    })
+
+    setAppointmentRequests(updated)
+  }
+
+  // Handle assign appointment
+  const handleAssignAppointment = () => {
+    if (!selectedAppointment || !assignEmail || !assignName) return
+
+    const updated = appointmentRequests.map((a) => {
+      if (a.id === selectedAppointment.id) {
+        return {
+          ...a,
+          assignedTo: assignName,
+          assignedEmail: assignEmail,
+          updatedAt: new Date().toISOString(),
+        }
+      }
+      return a
+    })
+
+    setAppointmentRequests(updated)
+    setIsAssignAppointmentOpen(false)
+    setAssignEmail("")
+    setAssignName("")
+  }
+
+  // Format file size
+  const formatFileSize = (bytes: number) => {
+    if (bytes < 1024) return bytes + " B"
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(2) + " KB"
+    return (bytes / (1024 * 1024)).toFixed(2) + " MB"
+  }
+
+  // Handle download attachment
+  const handleDownloadAttachment = (appointment: any) => {
+    if (!appointment.attachment) return
+
+    const link = document.createElement("a")
+    link.href = appointment.attachment.data
+    link.download = appointment.attachment.name
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+  }
+
   const getResourcesForService = (service: string): ResourceSchedule[] => {
     const resourceIds = serviceResources[service] || []
     return resources.filter((r) => resourceIds.includes(r.id))
@@ -212,19 +316,20 @@ export function AppointmentManagement() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold">Manage Departments & Specialists</h2>
-          <p className="text-muted-foreground">Create and manage departments and people, assign them to services</p>
+          <h2 className="text-2xl font-bold">{t.admin.appointments.title}</h2>
+          <p className="text-muted-foreground">{t.admin.appointments.description}</p>
         </div>
         <Button onClick={() => setIsCreateDialogOpen(true)}>
           <Plus className="h-4 w-4 mr-2" />
-          Add Resource
+          {t.admin.appointments.addResource}
         </Button>
       </div>
 
       <Tabs defaultValue="resources" className="space-y-4">
         <TabsList>
-          <TabsTrigger value="resources">All Resources</TabsTrigger>
-          <TabsTrigger value="services">Service Assignments</TabsTrigger>
+          <TabsTrigger value="resources">{t.admin.appointments.allResources}</TabsTrigger>
+          <TabsTrigger value="services">{t.admin.appointments.serviceAssignments}</TabsTrigger>
+          <TabsTrigger value="appointments">{t.admin.appointments.appointmentRequests}</TabsTrigger>
         </TabsList>
 
         <TabsContent value="resources" className="space-y-4">
@@ -234,19 +339,19 @@ export function AppointmentManagement() {
               <div className="flex flex-col gap-4 md:flex-row">
                 <div className="relative flex-1">
                   <Input
-                    placeholder="Search resources by name or schedule..."
+                    placeholder={t.admin.appointments.searchResources}
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                   />
                 </div>
                 <Select value={filterType} onValueChange={(value) => setFilterType(value as typeof filterType)}>
                   <SelectTrigger className="w-full md:w-[180px]">
-                    <SelectValue placeholder="Filter by type" />
+                    <SelectValue placeholder={t.admin.appointments.filterByType} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">All Types</SelectItem>
-                    <SelectItem value="department">Departments</SelectItem>
-                    <SelectItem value="person">People</SelectItem>
+                    <SelectItem value="all">{t.admin.appointments.allTypes}</SelectItem>
+                    <SelectItem value="department">{t.admin.appointments.departments}</SelectItem>
+                    <SelectItem value="person">{t.admin.appointments.people}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -260,8 +365,8 @@ export function AppointmentManagement() {
                 <Building2 className="h-12 w-12 text-muted-foreground mb-4" />
                 <p className="text-muted-foreground text-center">
                   {resources.length === 0
-                    ? "No resources created yet. Click 'Add Resource' to create your first department or person."
-                    : "No resources match your search criteria."}
+                    ? t.admin.appointments.noResources
+                    : t.admin.appointments.noResourcesMatch}
                 </p>
               </CardContent>
             </Card>
@@ -280,7 +385,7 @@ export function AppointmentManagement() {
                             ) : (
                               <Users className="h-3 w-3 mr-1" />
                             )}
-                            {resource.type === "department" ? "Department" : "Person"}
+                            {resource.type === "department" ? t.admin.appointments.departments : t.admin.appointments.people}
                           </Badge>
                         </div>
                       </div>
@@ -299,11 +404,11 @@ export function AppointmentManagement() {
                     <div className="flex gap-2">
                       <Button variant="outline" size="sm" onClick={() => handleOpenEdit(resource)}>
                         <Edit className="h-4 w-4 mr-2" />
-                        Edit
+                        {t.common.edit}
                       </Button>
                       <Button variant="outline" size="sm" onClick={() => handleOpenAssign(resource)}>
                         <Plus className="h-4 w-4 mr-2" />
-                        Assign to Service
+                        {t.admin.appointments.assignToService}
                       </Button>
                       <Button variant="ghost" size="sm" onClick={() => handleDeleteResource(resource.id)}>
                         <Trash2 className="h-4 w-4" />
@@ -319,9 +424,9 @@ export function AppointmentManagement() {
         <TabsContent value="services" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Service Resource Assignments</CardTitle>
+              <CardTitle>{t.admin.appointments.serviceResourceAssignments}</CardTitle>
               <CardDescription>
-                View and manage which departments and people are assigned to each service
+                {t.admin.appointments.viewAndManageAssignments}
               </CardDescription>
             </CardHeader>
           </Card>
@@ -333,12 +438,12 @@ export function AppointmentManagement() {
                 <CardHeader>
                   <CardTitle className="text-lg">{service}</CardTitle>
                   <CardDescription>
-                    {serviceResources.length} resource(s) assigned
+                    {serviceResources.length} {t.admin.appointments.resourcesAssigned}
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
                   {serviceResources.length === 0 ? (
-                    <p className="text-sm text-muted-foreground">No resources assigned to this service.</p>
+                    <p className="text-sm text-muted-foreground">{t.admin.appointments.noResourcesAssigned}</p>
                   ) : (
                     <div className="space-y-2">
                       {serviceResources.map((resource) => (
@@ -373,40 +478,159 @@ export function AppointmentManagement() {
             )
           })}
         </TabsContent>
+
+        <TabsContent value="appointments" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>{t.admin.appointments.appointmentRequests}</CardTitle>
+              <CardDescription>
+                {t.admin.appointments.viewAndManage}
+              </CardDescription>
+            </CardHeader>
+          </Card>
+
+          {appointmentRequests.length === 0 ? (
+            <Card>
+              <CardContent className="flex flex-col items-center justify-center py-12">
+                <Clock className="h-12 w-12 text-muted-foreground mb-4" />
+                <p className="text-muted-foreground text-center">
+                  {t.admin.appointments.noAppointments}
+                </p>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="space-y-4">
+              {appointmentRequests.map((appointment) => (
+                <Card key={appointment.id}>
+                  <CardHeader>
+                    <div className="flex items-start justify-between">
+                      <div className="space-y-2 flex-1">
+                        <div className="flex items-center gap-3 flex-wrap">
+                          <CardTitle className="text-lg">{appointment.title}</CardTitle>
+                          <Badge variant={appointment.status === "pending" ? "secondary" : "default"}>
+                            {appointment.status}
+                          </Badge>
+                          {appointment.rewarded && (
+                            <Badge variant="outline" className="bg-green-50 text-green-600">
+                              <CheckCircle2 className="h-3 w-3 mr-1" />
+                              Rewarded
+                            </Badge>
+                          )}
+                        </div>
+                        <CardDescription>
+                          <div className="flex items-center gap-2">
+                            <span>Administrator: {appointment.administratorLabel}</span>
+                          </div>
+                          <div className="flex items-center gap-2 mt-1">
+                            <span>{t.admin.appointments.customer}: {appointment.customer}</span>
+                          </div>
+                        </CardDescription>
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-3">
+                      <div>
+                        <p className="text-sm font-medium mb-1">{t.tickets.description}:</p>
+                        <p className="text-sm text-muted-foreground">{appointment.description}</p>
+                      </div>
+                      {appointment.attachment && (
+                        <div className="flex items-center gap-2">
+                          {appointment.attachment.type.startsWith("image/") ? (
+                            <ImageIcon className="h-4 w-4" />
+                          ) : (
+                            <FileText className="h-4 w-4" />
+                          )}
+                          <span className="text-sm">{appointment.attachment.name}</span>
+                        </div>
+                      )}
+                      <div className="flex gap-2 flex-wrap">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            setSelectedAppointment(appointment)
+                            setIsViewAppointmentOpen(true)
+                          }}
+                        >
+                          <Eye className="h-4 w-4 mr-2" />
+                          {t.admin.tickets.viewDetails}
+                        </Button>
+                        {!appointment.rewarded && (
+                          <Button
+                            variant={appointment.rewarded ? "secondary" : "default"}
+                            size="sm"
+                            onClick={() => handleAcceptAppointment(appointment)}
+                            disabled={appointment.rewarded}
+                          >
+                            {appointment.rewarded ? (
+                              <>
+                                <CheckCircle2 className="h-4 w-4 mr-2" />
+                                {t.admin.tickets.rewarded}
+                              </>
+                            ) : (
+                              <>
+                                <Gift className="h-4 w-4 mr-2" />
+                                {t.admin.tickets.accept}
+                              </>
+                            )}
+                          </Button>
+                        )}
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            setSelectedAppointment(appointment)
+                            setAssignEmail(appointment.assignedEmail || "")
+                            setAssignName(appointment.assignedTo || "")
+                            setIsAssignAppointmentOpen(true)
+                          }}
+                        >
+                          <Mail className="h-4 w-4 mr-2" />
+                          {t.admin.tickets.assign}
+                        </Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+        </TabsContent>
       </Tabs>
 
       {/* Create Resource Dialog */}
       <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Create New Resource</DialogTitle>
-            <DialogDescription>Add a new department or person with their working schedule</DialogDescription>
+            <DialogTitle>{t.admin.appointments.createNewResource}</DialogTitle>
+            <DialogDescription>{t.admin.appointments.addNewResource}</DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label>Name</Label>
+              <Label>{t.admin.appointments.resourceName}</Label>
               <Input
-                placeholder="e.g., Account Services Department or Account Specialist"
+                placeholder={t.admin.appointments.resourceNamePlaceholder}
                 value={newResourceName}
                 onChange={(e) => setNewResourceName(e.target.value)}
               />
             </div>
             <div className="space-y-2">
-              <Label>Type</Label>
+              <Label>{t.admin.appointments.resourceType}</Label>
               <Select value={newResourceType} onValueChange={(value) => setNewResourceType(value as typeof newResourceType)}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="department">Department</SelectItem>
-                  <SelectItem value="person">Person</SelectItem>
+                  <SelectItem value="department">{t.admin.appointments.departments}</SelectItem>
+                  <SelectItem value="person">{t.admin.appointments.people}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-2">
-              <Label>Working Schedule</Label>
+              <Label>{t.admin.appointments.workingSchedule}</Label>
               <Textarea
-                placeholder="e.g., Everyday from 8 AM - 3 PM except Thursday from 8 AM - 4 PM"
+                placeholder={t.admin.appointments.workingSchedulePlaceholder}
                 value={newResourceSchedule}
                 onChange={(e) => setNewResourceSchedule(e.target.value)}
                 rows={3}
@@ -415,10 +639,10 @@ export function AppointmentManagement() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
-              Cancel
+              {t.common.cancel}
             </Button>
             <Button onClick={handleCreateResource} disabled={!newResourceName.trim() || !newResourceSchedule.trim()}>
-              Create
+              {t.common.add}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -428,34 +652,34 @@ export function AppointmentManagement() {
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Edit Resource</DialogTitle>
-            <DialogDescription>Update the resource information</DialogDescription>
+            <DialogTitle>{t.admin.appointments.editResource}</DialogTitle>
+            <DialogDescription>{t.admin.appointments.updateResource}</DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label>Name</Label>
+              <Label>{t.admin.appointments.resourceName}</Label>
               <Input
-                placeholder="e.g., Account Services Department or Account Specialist"
+                placeholder={t.admin.appointments.resourceNamePlaceholder}
                 value={newResourceName}
                 onChange={(e) => setNewResourceName(e.target.value)}
               />
             </div>
             <div className="space-y-2">
-              <Label>Type</Label>
+              <Label>{t.admin.appointments.resourceType}</Label>
               <Select value={newResourceType} onValueChange={(value) => setNewResourceType(value as typeof newResourceType)}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="department">Department</SelectItem>
-                  <SelectItem value="person">Person</SelectItem>
+                  <SelectItem value="department">{t.admin.appointments.departments}</SelectItem>
+                  <SelectItem value="person">{t.admin.appointments.people}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-2">
-              <Label>Working Schedule</Label>
+              <Label>{t.admin.appointments.workingSchedule}</Label>
               <Textarea
-                placeholder="e.g., Everyday from 8 AM - 3 PM except Thursday from 8 AM - 4 PM"
+                placeholder={t.admin.appointments.workingSchedulePlaceholder}
                 value={newResourceSchedule}
                 onChange={(e) => setNewResourceSchedule(e.target.value)}
                 rows={3}
@@ -464,10 +688,10 @@ export function AppointmentManagement() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
-              Cancel
+              {t.common.cancel}
             </Button>
             <Button onClick={handleEditResource} disabled={!newResourceName.trim() || !newResourceSchedule.trim()}>
-              Save Changes
+              {t.common.save}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -477,17 +701,17 @@ export function AppointmentManagement() {
       <Dialog open={isAssignDialogOpen} onOpenChange={setIsAssignDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Assign Resource to Service</DialogTitle>
+            <DialogTitle>{t.admin.appointments.assignToService}</DialogTitle>
             <DialogDescription>
-              Select a service to assign "{selectedResource?.name}" to
+              {t.admin.appointments.selectService}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label>Service</Label>
+              <Label>{t.tickets.service}</Label>
               <Select value={selectedService} onValueChange={setSelectedService}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Select a service" />
+                  <SelectValue placeholder={t.admin.appointments.selectService} />
                 </SelectTrigger>
                 <SelectContent>
                   {allServices.map((service) => (
@@ -501,10 +725,146 @@ export function AppointmentManagement() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsAssignDialogOpen(false)}>
-              Cancel
+              {t.common.cancel}
             </Button>
             <Button onClick={handleAssignToService} disabled={!selectedService}>
-              Assign
+              {t.admin.appointments.assignToService}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* View Appointment Details Dialog */}
+      <Dialog open={isViewAppointmentOpen} onOpenChange={setIsViewAppointmentOpen}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{t.admin.tickets.viewDetails}</DialogTitle>
+            <DialogDescription>
+              {t.admin.appointments.viewAppointmentDetailsDescription}
+            </DialogDescription>
+          </DialogHeader>
+          {selectedAppointment && (
+            <div className="space-y-4">
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div>
+                  <Label className="text-xs text-muted-foreground mb-1 block">{t.admin.appointments.appointmentID}</Label>
+                  <p className="text-sm font-medium">{selectedAppointment.id}</p>
+                </div>
+                <div>
+                  <Label className="text-xs text-muted-foreground mb-1 block">{t.admin.appointments.status}</Label>
+                  <Badge variant={selectedAppointment.status === "pending" ? "secondary" : "default"}>
+                    {selectedAppointment.status}
+                  </Badge>
+                </div>
+                <div>
+                  <Label className="text-xs text-muted-foreground mb-1 block">{t.appointments.myAppointments.administrator}</Label>
+                  <p className="text-sm font-medium">{selectedAppointment.administratorLabel}</p>
+                </div>
+                <div>
+                  <Label className="text-xs text-muted-foreground mb-1 block">{t.admin.appointments.customer}</Label>
+                  <p className="text-sm font-medium">{selectedAppointment.customer}</p>
+                </div>
+                <div>
+                  <Label className="text-xs text-muted-foreground mb-1 block">{t.admin.appointments.customerPhone}</Label>
+                  <p className="text-sm font-medium">{selectedAppointment.customerPhone}</p>
+                </div>
+                <div>
+                  <Label className="text-xs text-muted-foreground mb-1 block">{t.admin.appointments.customerIBAN}</Label>
+                  <p className="text-sm font-medium">{selectedAppointment.customerIban}</p>
+                </div>
+                <div className="sm:col-span-2">
+                  <Label className="text-xs text-muted-foreground mb-1 block">{t.appointments.appointmentRequest.title}</Label>
+                  <p className="text-sm font-medium">{selectedAppointment.title}</p>
+                </div>
+                <div className="sm:col-span-2">
+                  <Label className="text-xs text-muted-foreground mb-1 block">{t.tickets.description}</Label>
+                  <p className="text-sm text-muted-foreground">{selectedAppointment.description}</p>
+                </div>
+                {selectedAppointment.attachment && (
+                  <div className="sm:col-span-2">
+                    <Label className="text-xs text-muted-foreground mb-2 block">{t.appointments.appointmentRequest.attachment}</Label>
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
+                        <div className="flex items-center gap-2 flex-1 min-w-0">
+                          {selectedAppointment.attachment.type.startsWith("image/") ? (
+                            <ImageIcon className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                          ) : (
+                            <FileText className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                          )}
+                          <span className="text-sm truncate">{selectedAppointment.attachment.name}</span>
+                          <span className="text-xs text-muted-foreground flex-shrink-0">
+                            ({formatFileSize(selectedAppointment.attachment.size)})
+                          </span>
+                        </div>
+                        <Button variant="outline" size="sm" onClick={() => handleDownloadAttachment(selectedAppointment)}>
+                          <Download className="h-4 w-4 mr-2" />
+                          {t.tickets.download}
+                        </Button>
+                      </div>
+                      {selectedAppointment.attachment.type.startsWith("image/") && (
+                        <div className="border rounded-lg overflow-hidden">
+                          <img
+                            src={selectedAppointment.attachment.data}
+                            alt="Attachment"
+                            className="w-full h-auto max-h-96 object-contain"
+                          />
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+                {selectedAppointment.assignedTo && (
+                  <div className="sm:col-span-2">
+                    <Label className="text-xs text-muted-foreground mb-1 block">{t.appointments.myAppointments.assignedTo}</Label>
+                    <p className="text-sm font-medium">{selectedAppointment.assignedTo}</p>
+                    <p className="text-xs text-muted-foreground">{selectedAppointment.assignedEmail}</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsViewAppointmentOpen(false)}>
+              {t.common.close}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Assign Appointment Dialog */}
+      <Dialog open={isAssignAppointmentOpen} onOpenChange={setIsAssignAppointmentOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t.admin.tickets.assign}</DialogTitle>
+            <DialogDescription>
+              {t.admin.appointments.assignAppointmentDescription}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>{t.appointments.myAppointments.administrator}</Label>
+              <Input
+                placeholder={t.admin.appointments.enterAdministratorName}
+                value={assignName}
+                onChange={(e) => setAssignName(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>{t.admin.appointments.administratorEmail}</Label>
+              <Input
+                type="email"
+                placeholder={t.admin.appointments.enterAdministratorEmail}
+                value={assignEmail}
+                onChange={(e) => setAssignEmail(e.target.value)}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsAssignAppointmentOpen(false)}>
+              {t.common.cancel}
+            </Button>
+            <Button onClick={handleAssignAppointment} disabled={!assignEmail || !assignName}>
+              {t.admin.tickets.assign}
             </Button>
           </DialogFooter>
         </DialogContent>

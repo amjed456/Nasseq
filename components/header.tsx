@@ -58,7 +58,7 @@ export function Header() {
             href="/rewards"
             className="text-sm font-medium text-foreground/80 hover:text-foreground transition-colors"
           >
-            Rewards
+            {t.common.rewards}
           </Link>
           <Link
             href="/admin"

@@ -4,8 +4,10 @@ import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Gift, Trophy, UtensilsCrossed, Plane, Star, CheckCircle2 } from "lucide-react"
+import { useLanguage } from "@/contexts/language-context"
 
 export function RewardsPage() {
+  const { t } = useLanguage()
   const [userPoints, setUserPoints] = useState(0)
   const [milestones, setMilestones] = useState<{ id: string; points: number; reward: string; unlocked: boolean }[]>([])
 
@@ -24,13 +26,13 @@ export function RewardsPage() {
       {
         id: "restaurant",
         points: 500,
-        reward: "Discount at Partner Restaurant",
+        reward: t.rewards.milestone500.title,
         unlocked: points >= 500,
       },
       {
         id: "flight",
         points: 1000,
-        reward: "Discount on Flight to Turkey",
+        reward: t.rewards.milestone1000.title,
         unlocked: points >= 1000,
       },
     ]
@@ -52,13 +54,13 @@ export function RewardsPage() {
         {
           id: "restaurant",
           points: 500,
-          reward: "Discount at Partner Restaurant",
+          reward: t.rewards.milestone500.title,
           unlocked: points >= 500,
         },
         {
           id: "flight",
           points: 1000,
-          reward: "Discount on Flight to Turkey",
+          reward: t.rewards.milestone1000.title,
           unlocked: points >= 1000,
         },
       ]
@@ -92,20 +94,20 @@ export function RewardsPage() {
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle className="text-2xl">Your Reward Points</CardTitle>
-              <CardDescription>Earn points by submitting feedback tickets</CardDescription>
+              <CardTitle className="text-2xl">{t.rewards.title}</CardTitle>
+              <CardDescription>{t.rewards.description}</CardDescription>
             </div>
             <div className="text-right">
               <div className="text-4xl font-bold text-primary">{userPoints}</div>
-              <p className="text-sm text-muted-foreground">Total Points</p>
+              <p className="text-sm text-muted-foreground">{t.rewards.totalPoints}</p>
             </div>
           </div>
         </CardHeader>
         <CardContent>
           <div className="space-y-2">
             <div className="flex items-center justify-between text-sm">
-              <span className="text-muted-foreground">Points per accepted ticket</span>
-              <span className="font-medium">+20 points</span>
+              <span className="text-muted-foreground">{t.rewards.howToEarnList.earnPoints}</span>
+              <span className="font-medium">+20 {t.rewards.milestone500.progress}</span>
             </div>
             {nextMilestone && (
               <div className="space-y-2">
@@ -131,7 +133,7 @@ export function RewardsPage() {
             {!nextMilestone && (
               <div className="flex items-center gap-2 text-sm text-green-600">
                 <Trophy className="h-4 w-4" />
-                <span>Congratulations! You've unlocked all milestones!</span>
+                <span>{t.rewards.milestone1000.congratulations}</span>
               </div>
             )}
           </div>
@@ -140,7 +142,7 @@ export function RewardsPage() {
 
       {/* Milestones */}
       <div>
-        <h2 className="text-xl font-bold mb-4">Reward Milestones</h2>
+        <h2 className="text-xl font-bold mb-4">{t.rewards.milestones}</h2>
         <div className="grid gap-4 md:grid-cols-2">
           {milestones.map((milestone) => (
             <Card
@@ -159,16 +161,16 @@ export function RewardsPage() {
                       <CardTitle className="text-lg">{milestone.reward}</CardTitle>
                     </div>
                     <CardDescription>
-                      Unlock at {milestone.points} points
+                      {milestone.id === "restaurant" ? t.rewards.milestone500.description : t.rewards.milestone1000.description}
                     </CardDescription>
                   </div>
                   {milestone.unlocked ? (
                     <Badge variant="default" className="bg-green-500">
                       <CheckCircle2 className="h-3 w-3 mr-1" />
-                      Unlocked
+                      {t.rewards.unlocked}
                     </Badge>
                   ) : (
-                    <Badge variant="outline">{milestone.points} pts</Badge>
+                    <Badge variant="outline">{milestone.points} {t.rewards.milestone500.progress}</Badge>
                   )}
                 </div>
               </CardHeader>
@@ -180,18 +182,18 @@ export function RewardsPage() {
                     </p>
                     {milestone.id === "restaurant" ? (
                       <p className="text-sm text-muted-foreground">
-                        Show this reward at any partner restaurant to receive your discount.
+                        {t.rewards.milestone500.congratulations}
                       </p>
                     ) : (
                       <p className="text-sm text-muted-foreground">
-                        Contact customer service to redeem your flight discount to Turkey.
+                        {t.rewards.milestone1000.congratulations}
                       </p>
                     )}
                   </div>
                 ) : (
                   <div className="space-y-2">
                     <p className="text-sm text-muted-foreground">
-                      {milestone.points - userPoints} more points needed to unlock this reward.
+                      {milestone.points - userPoints} {t.rewards.milestone500.progress} needed to unlock this reward.
                     </p>
                     <div className="w-full bg-muted rounded-full h-2">
                       <div
@@ -214,7 +216,7 @@ export function RewardsPage() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Gift className="h-5 w-5" />
-            How to Earn Points
+            {t.rewards.howToEarn}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
@@ -223,10 +225,9 @@ export function RewardsPage() {
               <Star className="h-4 w-4 text-primary" />
             </div>
             <div className="flex-1">
-              <p className="font-medium">Submit Feedback Tickets</p>
+              <p className="font-medium">{t.rewards.howToEarnList.submitFeedback}</p>
               <p className="text-sm text-muted-foreground">
-                Submit feedback about services you've used. When your ticket is accepted by admin, you'll receive 20
-                reward points.
+                {t.rewards.howToEarnList.earnPoints}
               </p>
             </div>
           </div>
@@ -235,10 +236,9 @@ export function RewardsPage() {
               <CheckCircle2 className="h-4 w-4 text-primary" />
             </div>
             <div className="flex-1">
-              <p className="font-medium">Ticket Acceptance</p>
+              <p className="font-medium">{t.rewards.howToEarnList.unlockMilestones}</p>
               <p className="text-sm text-muted-foreground">
-                Points are only awarded when your feedback ticket is accepted by an administrator. Rejected tickets do
-                not earn points.
+                {t.rewards.howToEarnList.unlockMilestones}
               </p>
             </div>
           </div>

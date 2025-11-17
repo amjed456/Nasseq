@@ -14,7 +14,7 @@ export function TicketingSystem() {
     <Tabs defaultValue="my-tickets" className="w-full">
       <div className="flex items-center justify-between mb-6">
         <TabsList>
-          <TabsTrigger value="my-tickets">My Tickets</TabsTrigger>
+          <TabsTrigger value="my-tickets">{t.tickets.myTickets}</TabsTrigger>
           <TabsTrigger value="create">{t.common.createTicket}</TabsTrigger>
         </TabsList>
       </div>

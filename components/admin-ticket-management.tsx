@@ -18,8 +18,10 @@ import {
 } from "@/components/ui/dialog"
 import { Search, Clock, AlertCircle, MessageSquare, Send, User, Mail, Download, FileText, Image as ImageIcon, Eye, CheckCircle2, Gift } from "lucide-react"
 import { Ticket, TicketAttachment } from "@/components/create-ticket"
-
+import { useLanguage } from "@/contexts/language-context"
+    
 export function TicketManagement() {
+  const { t } = useLanguage()
   const [tickets, setTickets] = useState<Ticket[]>([])
   const [searchQuery, setSearchQuery] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
@@ -240,7 +242,7 @@ export function TicketManagement() {
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
-                placeholder="Search by ticket ID, customer, or service..."
+                placeholder={t.admin.tickets.searchPlaceholder}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-9"
@@ -248,27 +250,27 @@ export function TicketManagement() {
             </div>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
               <SelectTrigger className="w-full md:w-[180px]">
-                <SelectValue placeholder="All Status" />
+                <SelectValue placeholder={t.admin.tickets.allStatus} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Status</SelectItem>
-                <SelectItem value="pending">Pending</SelectItem>
-                <SelectItem value="under-review">Under Review</SelectItem>
-                <SelectItem value="in-progress">In Progress</SelectItem>
-                <SelectItem value="completed">Completed</SelectItem>
-                <SelectItem value="rejected">Rejected</SelectItem>
+                <SelectItem value="all">{t.admin.tickets.allStatus}</SelectItem>
+                <SelectItem value="pending">{t.tickets.pending}</SelectItem>
+                <SelectItem value="under-review">{t.tickets.underReview}</SelectItem>
+                <SelectItem value="in-progress">{t.tickets.inProgress}</SelectItem>
+                <SelectItem value="completed">{t.tickets.completed}</SelectItem>
+                <SelectItem value="rejected">{t.tickets.rejected}</SelectItem>
               </SelectContent>
             </Select>
             <Select value={priorityFilter} onValueChange={setPriorityFilter}>
               <SelectTrigger className="w-full md:w-[180px]">
-                <SelectValue placeholder="All Priority" />
+                <SelectValue placeholder={t.tickets.allPriority} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Priority</SelectItem>
-                <SelectItem value="urgent">Urgent</SelectItem>
-                <SelectItem value="high">High</SelectItem>
-                <SelectItem value="medium">Medium</SelectItem>
-                <SelectItem value="low">Low</SelectItem>
+                <SelectItem value="all">{t.tickets.allPriority}</SelectItem>
+                <SelectItem value="urgent">{t.tickets.urgent}</SelectItem>
+                <SelectItem value="high">{t.tickets.high}</SelectItem>
+                <SelectItem value="medium">{t.tickets.medium}</SelectItem>
+                <SelectItem value="low">{t.tickets.low}</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -280,7 +282,7 @@ export function TicketManagement() {
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-12">
             <AlertCircle className="h-12 w-12 text-muted-foreground mb-4" />
-            <p className="text-muted-foreground text-center">No tickets found.</p>
+            <p className="text-muted-foreground text-center">{t.admin.tickets.noTicketsFound}</p>
           </CardContent>
         </Card>
       ) : (
@@ -305,7 +307,7 @@ export function TicketManagement() {
                     <Badge variant={getStatusBadgeVariant(ticket.status)}>{ticket.status}</Badge>
                   </div>
                   <CardDescription>
-                    Customer: {ticket.customer} • {ticket.serviceCategory}
+                    {t.tickets.service}: {ticket.customer} • {ticket.serviceCategory}
                   </CardDescription>
                 </div>
               </div>
@@ -313,18 +315,18 @@ export function TicketManagement() {
             <CardContent className="space-y-4">
               <div className="grid gap-4 sm:grid-cols-3 text-sm">
                 <div>
-                  <div className="text-muted-foreground text-xs mb-1">Assigned To</div>
+                  <div className="text-muted-foreground text-xs mb-1">{t.admin.tickets.assign}</div>
                   <div className="font-medium">{ticket.assignedTo || "Unassigned"}</div>
                 </div>
                 <div>
-                  <div className="text-muted-foreground text-xs mb-1">Created</div>
+                  <div className="text-muted-foreground text-xs mb-1">{t.tickets.createdAt}</div>
                   <div className="font-medium flex items-center gap-1">
                     <Clock className="h-3 w-3" />
                     {formatDate(ticket.createdAt)}
                   </div>
                 </div>
                 <div>
-                  <div className="text-muted-foreground text-xs mb-1">Replies</div>
+                  <div className="text-muted-foreground text-xs mb-1">{t.tickets.adminReplies}</div>
                   <div className="font-medium flex items-center gap-1">
                     <MessageSquare className="h-3 w-3" />
                     {ticket.replies?.length || 0}
@@ -332,7 +334,7 @@ export function TicketManagement() {
                 </div>
                 {ticket.attachments && ticket.attachments.length > 0 && (
                   <div>
-                    <div className="text-muted-foreground text-xs mb-1">Attachments</div>
+                    <div className="text-muted-foreground text-xs mb-1">{t.tickets.attachments}</div>
                     <div className="font-medium flex items-center gap-1">
                       <FileText className="h-3 w-3" />
                       {ticket.attachments.length}
@@ -342,17 +344,17 @@ export function TicketManagement() {
               </div>
               <div className="flex gap-2 flex-wrap">
                 <Button variant="default" size="sm" onClick={() => handleViewDetails(ticket)}>
-                  View Details
+                  {t.admin.tickets.viewDetails}
                 </Button>
                 <Button variant="outline" size="sm" onClick={() => handleUpdateStatus(ticket)}>
-                  Update Status
+                  {t.admin.tickets.updateStatus}
                 </Button>
                 <Button variant="outline" size="sm" onClick={() => handleAssign(ticket)}>
-                  Assign
+                  {t.admin.tickets.assign}
                 </Button>
                 <Button variant="outline" size="sm" onClick={() => handleReply(ticket)}>
                   <Send className="h-4 w-4 mr-2" />
-                  Reply
+                  {t.admin.tickets.reply}
                 </Button>
                 {ticket.status !== "rejected" && (
                   <Button
@@ -364,12 +366,12 @@ export function TicketManagement() {
                     {ticket.rewarded ? (
                       <>
                         <CheckCircle2 className="h-4 w-4 mr-2" />
-                        Rewarded
+                        {t.admin.tickets.rewarded}
                       </>
                     ) : (
                       <>
                         <Gift className="h-4 w-4 mr-2" />
-                        Accept
+                        {t.admin.tickets.accept}
                       </>
                     )}
                   </Button>
@@ -384,73 +386,73 @@ export function TicketManagement() {
       <Dialog open={isViewDetailsOpen} onOpenChange={setIsViewDetailsOpen}>
         <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Ticket Details</DialogTitle>
-            <DialogDescription>Complete information about this feedback ticket</DialogDescription>
+            <DialogTitle>{t.admin.tickets.viewDetails}</DialogTitle>
+            <DialogDescription>{t.tickets.ticketSubmitted}</DialogDescription>
           </DialogHeader>
           {selectedTicket && (
             <div className="space-y-4">
               <div className="grid gap-4 sm:grid-cols-2">
                 <div>
-                  <Label className="text-xs text-muted-foreground">Ticket ID</Label>
+                  <Label className="text-xs text-muted-foreground">{t.tickets.ticketId}</Label>
                   <p className="font-mono text-sm">{selectedTicket.id}</p>
                 </div>
                 <div>
-                  <Label className="text-xs text-muted-foreground">Status</Label>
+                  <Label className="text-xs text-muted-foreground">{t.tickets.status}</Label>
                   <Badge variant={getStatusBadgeVariant(selectedTicket.status)} className="mt-1">
                     {selectedTicket.status}
                   </Badge>
                 </div>
                 <div>
-                  <Label className="text-xs text-muted-foreground">Priority</Label>
+                  <Label className="text-xs text-muted-foreground">{t.admin.tickets.priority}</Label>
                   <Badge variant="secondary" className="mt-1">
                     {selectedTicket.priority}
                   </Badge>
                 </div>
                 <div>
-                  <Label className="text-xs text-muted-foreground">Service Category</Label>
+                  <Label className="text-xs text-muted-foreground">{t.tickets.category}</Label>
                   <p className="text-sm">{selectedTicket.serviceCategory}</p>
                 </div>
                 <div className="sm:col-span-2">
-                  <Label className="text-xs text-muted-foreground">Service</Label>
+                  <Label className="text-xs text-muted-foreground">{t.tickets.service}</Label>
                   <p className="text-sm font-medium">{selectedTicket.service}</p>
                 </div>
                 <div>
-                  <Label className="text-xs text-muted-foreground">Customer National Number</Label>
+                  <Label className="text-xs text-muted-foreground">{t.admin.tickets.customerNationalNumber}</Label>
                   <p className="text-sm">{selectedTicket.customer}</p>
                 </div>
                 <div>
-                  <Label className="text-xs text-muted-foreground">Customer Phone</Label>
+                  <Label className="text-xs text-muted-foreground">{t.admin.tickets.customerPhone}</Label>
                   <p className="text-sm">{selectedTicket.customerPhone}</p>
                 </div>
                 <div>
-                  <Label className="text-xs text-muted-foreground">Customer IBAN</Label>
+                  <Label className="text-xs text-muted-foreground">{t.admin.tickets.customerIBAN}</Label>
                   <p className="text-sm">{selectedTicket.customerIban}</p>
                 </div>
                 <div>
-                  <Label className="text-xs text-muted-foreground">Assigned To</Label>
+                  <Label className="text-xs text-muted-foreground">{t.admin.tickets.assign}</Label>
                   <p className="text-sm">{selectedTicket.assignedTo || "Unassigned"}</p>
                 </div>
                 {selectedTicket.assignedEmail && (
                   <div>
-                    <Label className="text-xs text-muted-foreground">Assigned Email</Label>
+                    <Label className="text-xs text-muted-foreground">{t.admin.tickets.assignedEmail}</Label>
                     <p className="text-sm">{selectedTicket.assignedEmail}</p>
                   </div>
                 )}
                 <div>
-                  <Label className="text-xs text-muted-foreground">Created At</Label>
+                  <Label className="text-xs text-muted-foreground">{t.tickets.createdAt}</Label>
                   <p className="text-sm">{formatDate(selectedTicket.createdAt)}</p>
                 </div>
                 <div>
-                  <Label className="text-xs text-muted-foreground">Last Updated</Label>
+                  <Label className="text-xs text-muted-foreground">{t.tickets.updatedAt}</Label>
                   <p className="text-sm">{formatDate(selectedTicket.updatedAt)}</p>
                 </div>
                 <div className="sm:col-span-2">
-                  <Label className="text-xs text-muted-foreground">Description</Label>
+                  <Label className="text-xs text-muted-foreground">{t.tickets.description}</Label>
                   <p className="text-sm mt-1 p-3 bg-muted rounded-lg">{selectedTicket.description}</p>
                 </div>
                 {selectedTicket.rejectionReason && (
                   <div className="sm:col-span-2">
-                    <Label className="text-xs text-muted-foreground">Rejection Reason</Label>
+                    <Label className="text-xs text-muted-foreground">{t.tickets.rejectionReason}</Label>
                     <p className="text-sm mt-1 p-3 bg-destructive/10 text-destructive rounded-lg">
                       {selectedTicket.rejectionReason}
                     </p>
@@ -458,7 +460,7 @@ export function TicketManagement() {
                 )}
                 {selectedTicket.attachments && selectedTicket.attachments.length > 0 && (
                   <div className="sm:col-span-2">
-                    <Label className="text-xs text-muted-foreground mb-2 block">Attachments</Label>
+                    <Label className="text-xs text-muted-foreground mb-2 block">{t.tickets.attachments}</Label>
                     <div className="space-y-2">
                       {selectedTicket.attachments.map((attachment) => (
                         <div
@@ -503,7 +505,7 @@ export function TicketManagement() {
                 )}
                 {selectedTicket.replies && selectedTicket.replies.length > 0 && (
                   <div className="sm:col-span-2">
-                    <Label className="text-xs text-muted-foreground mb-2 block">Replies</Label>
+                    <Label className="text-xs text-muted-foreground mb-2 block">{t.tickets.adminReplies}</Label>
                     <div className="space-y-2">
                       {selectedTicket.replies.map((reply, idx) => (
                         <div key={idx} className="p-3 bg-muted rounded-lg">
@@ -522,7 +524,7 @@ export function TicketManagement() {
           )}
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsViewDetailsOpen(false)}>
-              Close
+              {t.common.close}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -532,30 +534,30 @@ export function TicketManagement() {
       <Dialog open={isUpdateStatusOpen} onOpenChange={setIsUpdateStatusOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Update Status</DialogTitle>
-            <DialogDescription>Change the status of this ticket</DialogDescription>
+            <DialogTitle>{t.admin.tickets.updateStatus}</DialogTitle>
+            <DialogDescription>{t.admin.tickets.changeStatusDescription}</DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label>Status</Label>
+              <Label>{t.tickets.status}</Label>
               <Select value={newStatus} onValueChange={setNewStatus}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Select status" />
+                  <SelectValue placeholder={t.admin.tickets.selectStatus} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="pending">Pending</SelectItem>
-                  <SelectItem value="under-review">Under Review</SelectItem>
-                  <SelectItem value="in-progress">In Progress</SelectItem>
-                  <SelectItem value="completed">Completed</SelectItem>
-                  <SelectItem value="rejected">Rejected</SelectItem>
+                  <SelectItem value="pending">{t.tickets.pending}</SelectItem>
+                  <SelectItem value="under-review">{t.tickets.underReview}</SelectItem>
+                  <SelectItem value="in-progress">{t.tickets.inProgress}</SelectItem>
+                  <SelectItem value="completed">{t.tickets.completed}</SelectItem>
+                  <SelectItem value="rejected">{t.tickets.rejected}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             {newStatus === "rejected" && (
               <div className="space-y-2">
-                <Label>Rejection Reason</Label>
+                <Label>{t.tickets.rejectionReason}</Label>
                 <Textarea
-                  placeholder="Enter the reason for rejection (this will be visible to the customer)"
+                  placeholder={t.admin.tickets.rejectionReasonPlaceholder}
                   value={rejectionReason}
                   onChange={(e) => setRejectionReason(e.target.value)}
                   rows={4}
@@ -565,10 +567,10 @@ export function TicketManagement() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsUpdateStatusOpen(false)}>
-              Cancel
+              {t.common.cancel}
             </Button>
             <Button onClick={saveStatusUpdate} disabled={!newStatus || (newStatus === "rejected" && !rejectionReason.trim())}>
-              Update Status
+              {t.admin.tickets.updateStatus}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -578,27 +580,27 @@ export function TicketManagement() {
       <Dialog open={isAssignOpen} onOpenChange={setIsAssignOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Assign Ticket</DialogTitle>
-            <DialogDescription>Assign this ticket to someone to work on it</DialogDescription>
+            <DialogTitle>{t.admin.tickets.assign}</DialogTitle>
+            <DialogDescription>{t.admin.tickets.assignDescription}</DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="assign-name">Name (Optional)</Label>
+              <Label htmlFor="assign-name">{t.admin.tickets.nameOptional}</Label>
               <Input
                 id="assign-name"
-                placeholder="Enter name"
+                placeholder={t.admin.tickets.enterName}
                 value={assignName}
                 onChange={(e) => setAssignName(e.target.value)}
               />
             </div>
             <div className="space-y-2">
               <Label htmlFor="assign-email">
-                Email <span className="text-destructive">*</span>
+                {t.admin.tickets.email} <span className="text-destructive">*</span>
               </Label>
               <Input
                 id="assign-email"
                 type="email"
-                placeholder="Enter email address"
+                placeholder={t.admin.tickets.enterEmail}
                 value={assignEmail}
                 onChange={(e) => setAssignEmail(e.target.value)}
               />
@@ -606,10 +608,10 @@ export function TicketManagement() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsAssignOpen(false)}>
-              Cancel
+              {t.common.cancel}
             </Button>
             <Button onClick={saveAssign} disabled={!assignEmail.trim()}>
-              Assign
+              {t.admin.tickets.assign}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -619,14 +621,14 @@ export function TicketManagement() {
       <Dialog open={isReplyOpen} onOpenChange={setIsReplyOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Send Reply</DialogTitle>
-            <DialogDescription>Send a reply to the customer who submitted this feedback</DialogDescription>
+            <DialogTitle>{t.admin.tickets.reply}</DialogTitle>
+            <DialogDescription>{t.admin.tickets.replyDescription}</DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label>Reply Message</Label>
+              <Label>{t.admin.tickets.replyMessage}</Label>
               <Textarea
-                placeholder="Enter your reply message..."
+                placeholder={t.admin.tickets.replyMessagePlaceholder}
                 value={replyMessage}
                 onChange={(e) => setReplyMessage(e.target.value)}
                 rows={6}
@@ -635,11 +637,11 @@ export function TicketManagement() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsReplyOpen(false)}>
-              Cancel
+              {t.common.cancel}
             </Button>
             <Button onClick={saveReply} disabled={!replyMessage.trim()}>
               <Send className="h-4 w-4 mr-2" />
-              Send Reply
+              {t.admin.tickets.reply}
             </Button>
           </DialogFooter>
         </DialogContent>

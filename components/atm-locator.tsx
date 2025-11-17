@@ -18,6 +18,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import { MapPin, Navigation, DollarSign, Wrench, CheckCircle2, XCircle, Search, MessageSquare, Upload, X, Image as ImageIcon, FileText } from "lucide-react"
+import { useLanguage } from "@/contexts/language-context"
 
 export type ATMFeedback = {
   id: string
@@ -192,17 +193,13 @@ function getStatusColor(status: string) {
   }
 }
 
-function getStatusLabel(status: string) {
-  switch (status) {
-    case "active":
-      return "Active"
-    case "maintenance":
-      return "Under Maintenance"
-    case "out-of-service":
-      return "Out of Service"
-    default:
-      return "Unknown"
+function getStatusLabel(status: string, t: any) {
+  const statusMap: Record<string, string> = {
+    "active": t.atm.status.available,
+    "maintenance": t.atm.status.maintenance,
+    "out-of-service": t.atm.status.outOfService,
   }
+  return statusMap[status] || "Unknown"
 }
 
 function getCongestionColor(congestion: string) {
@@ -219,6 +216,7 @@ function getCongestionColor(congestion: string) {
 }
 
 export function ATMLocator() {
+  const { t } = useLanguage()
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedCity, setSelectedCity] = useState<string>("all")
   const [feedbackDialogOpen, setFeedbackDialogOpen] = useState(false)
@@ -228,6 +226,18 @@ export function ATMLocator() {
   const [isDragOver, setIsDragOver] = useState(false)
 
   const cities = ["all", ...new Set(ATM_LOCATIONS.map((atm) => atm.city))]
+  
+  const getCityLabel = (city: string) => {
+    if (city === "all") return t.atm.cities.all
+    const cityMap: Record<string, string> = {
+      "Misrata": t.atm.cities.misrata,
+      "Zliten": t.atm.cities.zliten,
+      "Sorman": t.atm.cities.sorman,
+      "Sabha": t.atm.cities.sabha,
+      "Tripoli": t.atm.cities.tripoli,
+    }
+    return cityMap[city] || city
+  }
 
   const filteredATMs = ATM_LOCATIONS.filter((atm) => {
     const matchesSearch =
@@ -308,7 +318,7 @@ export function ATMLocator() {
     setFeedbackDialogOpen(false)
     setSelectedATM(null)
 
-    alert("Feedback submitted successfully! Thank you for your input.")
+    alert(t.atm.actions.feedbackSubmitted)
   }
 
   return (
@@ -320,7 +330,7 @@ export function ATMLocator() {
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
-                placeholder="Search by location, address, or city..."
+                placeholder={t.atm.searchPlaceholder}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-9"
@@ -330,7 +340,7 @@ export function ATMLocator() {
               <TabsList>
                 {cities.map((city) => (
                   <TabsTrigger key={city} value={city} className="capitalize">
-                    {city}
+                    {getCityLabel(city)}
                   </TabsTrigger>
                 ))}
               </TabsList>
@@ -343,7 +353,7 @@ export function ATMLocator() {
       <div className="grid gap-4 md:grid-cols-3">
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Total ATMs</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">{t.atm.statistics.totalATMs}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{filteredATMs.length}</div>
@@ -351,7 +361,7 @@ export function ATMLocator() {
         </Card>
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Active ATMs</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">{t.atm.statistics.activeATMs}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-green-600">{activeATMs.length}</div>
@@ -359,7 +369,7 @@ export function ATMLocator() {
         </Card>
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Unavailable</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">{t.atm.statistics.unavailable}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-red-600">{inactiveATMs.length}</div>
@@ -373,7 +383,7 @@ export function ATMLocator() {
           <Card>
             <CardContent className="flex flex-col items-center justify-center py-12">
               <MapPin className="h-12 w-12 text-muted-foreground mb-4" />
-              <p className="text-muted-foreground text-center">No ATMs found matching your search criteria</p>
+              <p className="text-muted-foreground text-center">{t.atm.noATMsFound}</p>
             </CardContent>
           </Card>
         ) : (
@@ -398,7 +408,7 @@ export function ATMLocator() {
                             ) : (
                               <XCircle className="h-3 w-3" />
                             )}
-                            {getStatusLabel(atm.status)}
+                            {getStatusLabel(atm.status, t)}
                           </Badge>
                         </div>
                         <CardDescription className="flex items-start gap-1.5">
@@ -423,8 +433,8 @@ export function ATMLocator() {
                       <div className="flex items-center gap-2 text-sm">
                         <DollarSign className="h-4 w-4 text-muted-foreground" />
                         <div>
-                          <div className="font-medium">Cash Available</div>
-                          <div className="text-muted-foreground">{atm.cashAvailable ? "Yes" : "No"}</div>
+                          <div className="font-medium">{t.atm.details.cashAvailable}</div>
+                          <div className="text-muted-foreground">{atm.cashAvailable ? t.atm.details.yes : t.atm.details.no}</div>
                         </div>
                       </div>
                       <div className="flex items-center gap-2 text-sm">
@@ -432,21 +442,21 @@ export function ATMLocator() {
                           <div className="text-muted-foreground font-bold text-xs">MAX</div>
                         </div>
                         <div>
-                          <div className="font-medium">Max Withdrawal</div>
+                          <div className="font-medium">{t.atm.details.maxWithdrawal}</div>
                           <div className="text-muted-foreground">
-                            {atm.maxWithdrawal > 0 ? `${atm.maxWithdrawal} LYD` : "N/A"}
+                            {atm.maxWithdrawal > 0 ? `${atm.maxWithdrawal} LYD` : t.atm.details.na}
                           </div>
                         </div>
                       </div>
                       {atm.status === "active" && (
                         <div className="flex items-center gap-2 text-sm">
                           <div>
-                            <div className="font-medium">Congestion</div>
+                            <div className="font-medium">{t.atm.details.congestion}</div>
                             <Badge
                               variant="outline"
                               className={`mt-1 capitalize ${getCongestionColor(atm.congestion)}`}
                             >
-                              {atm.congestion}
+                              {atm.congestion === "low" ? t.atm.details.low : atm.congestion === "medium" ? t.atm.details.medium : atm.congestion === "high" ? t.atm.details.high : t.atm.details.none}
                             </Badge>
                           </div>
                         </div>
@@ -460,7 +470,7 @@ export function ATMLocator() {
                         onClick={() => window.open(atm.mapUrl, "_blank")}
                       >
                         <Navigation className="h-4 w-4" />
-                        Get Directions
+                        {t.atm.actions.getDirections}
                       </Button>
                       <Button
                         variant="outline"
@@ -469,7 +479,7 @@ export function ATMLocator() {
                         onClick={() => handleOpenFeedback(atm)}
                       >
                         <MessageSquare className="h-4 w-4" />
-                        Submit Feedback
+                        {t.atm.actions.submitFeedback}
                       </Button>
                     </div>
                   </CardContent>
@@ -494,23 +504,23 @@ export function ATMLocator() {
       >
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Submit Feedback for {selectedATM?.name}</DialogTitle>
+            <DialogTitle>{t.atm.actions.submitFeedback} {selectedATM?.name}</DialogTitle>
             <DialogDescription>
-              Share your experience or report any issues with this ATM
+              {t.atm.actions.shareExperience}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label>Description</Label>
+              <Label>{t.atm.actions.description}</Label>
               <Textarea
-                placeholder="Describe your experience or any issues you encountered..."
+                placeholder={t.atm.actions.descriptionPlaceholder}
                 value={feedbackDescription}
                 onChange={(e) => setFeedbackDescription(e.target.value)}
                 rows={5}
               />
             </div>
             <div className="space-y-2">
-              <Label>Image Attachment (Optional)</Label>
+              <Label>{t.atm.actions.imageAttachment}</Label>
               {!feedbackImage ? (
                 <div
                                   className={`border-2 border-dashed rounded-lg p-6 transition-colors ${
@@ -530,10 +540,10 @@ export function ATMLocator() {
                                   <div className="flex flex-col items-center justify-center text-center">
                                     <Upload className="h-8 w-8 text-muted-foreground mb-2" />
                                     <p className="text-sm text-muted-foreground mb-2">
-                                      Drag and drop an image here, or click to select
+                                      {t.atm.actions.dragDropImage}
                                     </p>
                                     <p className="text-xs text-muted-foreground mb-4">
-                                      Supported formats: JPG, PNG (Max 5MB)
+                                      {t.atm.actions.supportedFormats}
                                     </p>
                                     <input
                                       type="file"
@@ -549,7 +559,7 @@ export function ATMLocator() {
                                       onClick={() => document.getElementById("atm-feedback-image")?.click()}
                                     >
                                       <Upload className="h-4 w-4 mr-2" />
-                                      Choose Image
+                                      {t.atm.actions.chooseImage}
                                     </Button>
                                   </div>
                                 </div>
@@ -568,10 +578,10 @@ export function ATMLocator() {
                           </div>
                           <DialogFooter>
                             <Button variant="outline" onClick={() => setFeedbackDialogOpen(false)}>
-                              Cancel
+                              {t.common.cancel}
                             </Button>
                             <Button onClick={handleSubmitFeedback} disabled={!feedbackDescription.trim()}>
-                              Submit Feedback
+                              {t.atm.actions.submitFeedback}
                             </Button>
           </DialogFooter>
         </DialogContent>

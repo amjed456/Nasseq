@@ -27,9 +27,9 @@ export default function RewardsPageRoute() {
       <Header />
       <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold tracking-tight text-foreground md:text-4xl">Rewards & Points</h1>
+          <h1 className="text-3xl font-bold tracking-tight text-foreground md:text-4xl">{t.rewards.rewardsAndPoints}</h1>
           <p className="mt-2 text-muted-foreground leading-relaxed">
-            Earn points by submitting feedback tickets and unlock amazing rewards
+            {t.rewards.earnPointsBySubmittingFeedbackTickets}
           </p>
         </div>
         <RewardsPage />

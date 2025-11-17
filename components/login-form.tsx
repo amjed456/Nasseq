@@ -1,11 +1,14 @@
 "use client"
 
+import { useState } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
+import { Label } from "@/components/ui/label"
 import {
   Form,
   FormControl,
@@ -30,6 +33,7 @@ export function LoginForm() {
   const { t } = useLanguage()
   const { login } = useAuth()
   const router = useRouter()
+  const [citizenType, setCitizenType] = useState<"libyan" | "foreign">("libyan")
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
@@ -41,6 +45,11 @@ export function LoginForm() {
   })
 
   const onSubmit = (data: LoginFormValues) => {
+    // Only allow submission for Libyan citizens
+    if (citizenType === "foreign") {
+      return
+    }
+    
     console.log("Login data:", data)
     // Store user info in localStorage for ticket system
     localStorage.setItem("userNationalNumber", data.nationalNumber)
@@ -55,24 +64,47 @@ export function LoginForm() {
   return (
     <Card className="w-full max-w-md mx-auto">
       <CardHeader className="space-y-1">
-        <CardTitle className="text-2xl font-bold">Login</CardTitle>
+        <CardTitle className="text-2xl font-bold">{t.login.title}</CardTitle>
         <CardDescription>
-          Enter your credentials to access your account
+          {t.login.description}
         </CardDescription>
       </CardHeader>
       <CardContent>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <div className="space-y-3">
+              <Label>{t.login.citizenType}</Label>
+              <RadioGroup
+                value={citizenType}
+                onValueChange={(value) => setCitizenType(value as "libyan" | "foreign")}
+                className="flex gap-6"
+              >
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="libyan" id="libyan" />
+                  <Label htmlFor="libyan" className="font-normal cursor-pointer">
+                    {t.login.libyanCitizen}
+                  </Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="foreign" id="foreign" />
+                  <Label htmlFor="foreign" className="font-normal cursor-pointer">
+                    {t.login.foreignCitizen}
+                  </Label>
+                </div>
+              </RadioGroup>
+            </div>
+
             <FormField
               control={form.control}
               name="nationalNumber"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>National Number</FormLabel>
+                  <FormLabel>{t.login.nationalNumber}</FormLabel>
                   <FormControl>
                     <Input
-                      placeholder="Enter your national number"
+                      placeholder={t.login.nationalNumberPlaceholder}
                       {...field}
+                      disabled={citizenType === "foreign"}
                     />
                   </FormControl>
                   <FormMessage />
@@ -85,12 +117,13 @@ export function LoginForm() {
               name="phoneNumber"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Phone Number</FormLabel>
+                  <FormLabel>{t.login.phoneNumber}</FormLabel>
                   <FormControl>
                     <Input
                       type="tel"
-                      placeholder="Enter your phone number"
+                      placeholder={t.login.phoneNumberPlaceholder}
                       {...field}
+                      disabled={citizenType === "foreign"}
                     />
                   </FormControl>
                   <FormMessage />
@@ -103,11 +136,12 @@ export function LoginForm() {
               name="iban"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>IBAN</FormLabel>
+                  <FormLabel>{t.login.iban}</FormLabel>
                   <FormControl>
                     <Input
-                      placeholder="Enter your IBAN"
+                      placeholder={t.login.ibanPlaceholder}
                       {...field}
+                      disabled={citizenType === "foreign"}
                     />
                   </FormControl>
                   <FormMessage />
@@ -115,8 +149,13 @@ export function LoginForm() {
               )}
             />
 
-            <Button type="submit" className="w-full" size="lg">
-              Login
+            <Button 
+              type="submit" 
+              className="w-full" 
+              size="lg"
+              disabled={citizenType === "foreign"}
+            >
+              {citizenType === "foreign" ? t.login.comingSoon : t.common.login}
             </Button>
           </form>
         </Form>
